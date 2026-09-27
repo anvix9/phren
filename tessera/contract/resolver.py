@@ -118,14 +118,23 @@ def resolve_permissions(contract: TesseraContract, agent: AgentProfile) -> Resol
             else:
                 allowed.append(action_id)
 
-    # Compute transaction limits
+    # Compute transaction limits — contract ceiling is the bound, not operator claim
+    def _min_opt(a, b):
+        """Return the minimum of two optional values (None means no limit)."""
+        vals = [v for v in (a, b) if v is not None]
+        return min(vals) if vals else None
+
     max_amount = None
     can_transact = False
 
     if agent.trust_level in (AgentTrust.SUPER_AGENT, AgentTrust.VERIFIED):
         if agent.capabilities.can_transact:
             can_transact = True
-            max_amount = agent.capabilities.max_transaction_amount
+            # The effective limit is the LOWER of the operator's claim and the contract's ceiling
+            max_amount = _min_opt(
+                agent.capabilities.max_transaction_amount,
+                contract.rate_limits.max_transaction_amount,
+            )
 
     return ResolvedPermissions(
         allowed_actions=allowed,

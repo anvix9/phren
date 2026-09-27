@@ -1,9 +1,9 @@
 {
-  "contract_id": "subway_shop_v2_auth",
+  "contract_id": "tessera_shop_v2",
   "version": "0.2.0",
-  "site_name": "SubwayShop Demo Store (with Auth)",
+  "site_name": "Tessera Shop Demo",
   "site_url": "http://localhost:8000",
-  "description": "E-commerce demo store with authentication. Agents must login or register before accessing cart, checkout, or orders. Product browsing is public. Test accounts: alice@example.com/password123, bob@example.com/securepass",
+  "description": "E-commerce demo with governed agent access. Actions have roles (primary/secondary/navigation) and screens have flow hints. Test accounts: alice@example.com/password123",
   "tier": "standard",
   "created_at": "2026-04-14T17:17:17.725563",
   "expires_at": null,
@@ -58,7 +58,8 @@
           "preconditions": [],
           "transitions_to": "search_results",
           "api_endpoint": "/api/auth/login",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "primary"
         },
         {
           "id": "register",
@@ -100,7 +101,8 @@
           "preconditions": [],
           "transitions_to": "search_results",
           "api_endpoint": "/api/auth/register",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "secondary"
         },
         {
           "id": "browse_without_login",
@@ -111,10 +113,12 @@
           "preconditions": [],
           "transitions_to": "search_results",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "To start shopping: login with your credentials"
     },
     {
       "id": "search_results",
@@ -207,7 +211,8 @@
           "preconditions": [],
           "transitions_to": "search_results",
           "api_endpoint": "/api/products",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "view_product",
@@ -229,7 +234,8 @@
           "preconditions": [],
           "transitions_to": "product_detail",
           "api_endpoint": "/api/products/{product_id}",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "view_cart",
@@ -240,7 +246,8 @@
           "preconditions": [],
           "transitions_to": "cart",
           "api_endpoint": "/api/cart/{cart_id}",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "navigation"
         },
         {
           "id": "view_profile",
@@ -251,10 +258,12 @@
           "preconditions": [],
           "transitions_to": "profile",
           "api_endpoint": "/api/auth/profile",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "To buy: search for a product \u2192 view_product to see details"
     },
     {
       "id": "product_detail",
@@ -341,7 +350,8 @@
           ],
           "transitions_to": "cart",
           "api_endpoint": "/api/cart/{cart_id}/add",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "primary"
         },
         {
           "id": "back_to_search",
@@ -352,10 +362,12 @@
           "preconditions": [],
           "transitions_to": "search_results",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": "search_results"
+      "parent": "search_results",
+      "flow_hint": "To buy this product: add_to_cart \u2192 then proceed_to_checkout from cart"
     },
     {
       "id": "cart",
@@ -419,7 +431,8 @@
           "preconditions": [],
           "transitions_to": "cart",
           "api_endpoint": "/api/cart/{cart_id}/update",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "secondary"
         },
         {
           "id": "remove_from_cart",
@@ -441,7 +454,8 @@
           "preconditions": [],
           "transitions_to": "cart",
           "api_endpoint": "/api/cart/{cart_id}/remove",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "secondary"
         },
         {
           "id": "proceed_to_checkout",
@@ -454,7 +468,8 @@
           ],
           "transitions_to": "checkout",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "primary"
         },
         {
           "id": "continue_shopping",
@@ -465,10 +480,12 @@
           "preconditions": [],
           "transitions_to": "search_results",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "To complete purchase: proceed_to_checkout"
     },
     {
       "id": "checkout",
@@ -574,7 +591,8 @@
           "preconditions": [],
           "transitions_to": "order_confirmation",
           "api_endpoint": "/api/checkout",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "primary"
         },
         {
           "id": "back_to_cart",
@@ -585,10 +603,12 @@
           "preconditions": [],
           "transitions_to": "cart",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": "cart"
+      "parent": "cart",
+      "flow_hint": "To finish: place_order with shipping details"
     },
     {
       "id": "order_confirmation",
@@ -642,7 +662,8 @@
           "preconditions": [],
           "transitions_to": "order_confirmation",
           "api_endpoint": "/api/orders/{order_id}",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "new_shopping_session",
@@ -653,10 +674,12 @@
           "preconditions": [],
           "transitions_to": "search_results",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "Order complete. Use check_order_status to verify."
     },
     {
       "id": "profile",
@@ -693,7 +716,8 @@
           "preconditions": [],
           "transitions_to": "order_confirmation",
           "api_endpoint": "/api/orders",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "back_to_search_from_profile",
@@ -704,10 +728,12 @@
           "preconditions": [],
           "transitions_to": "search_results",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "View your order history here"
     }
   ],
   "entry_screen": "auth_gate",
@@ -715,8 +741,10 @@
     "requests_per_minute": 30,
     "requests_per_hour": 500,
     "requests_per_day": 5000,
-    "max_concurrent_sessions": 1,
-    "max_items_per_action": 10
+    "max_concurrent_sessions": 10,
+    "max_items_per_action": 10,
+    "max_transaction_amount": 500.0,
+    "max_daily_spend": 2000.0
   },
   "data_terms": {
     "default_retention": "session",

@@ -1,7 +1,7 @@
 {
-  "contract_id": "subway_gov_v2_auth",
+  "contract_id": "tessera_library_v2",
   "version": "0.2.0",
-  "site_name": "SubwayGov Document Library & Services (with Auth)",
+  "site_name": "Tessera Library Demo",
   "site_url": "http://localhost:8004",
   "description": "Government document library and service portal with authentication. Document browsing is public. Submitting requests requires login. Test accounts: alice@example.com/password123, bob@example.com/securepass",
   "tier": "standard",
@@ -52,7 +52,8 @@
           "preconditions": [],
           "transitions_to": "document_search",
           "api_endpoint": "/api/auth/login",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "primary"
         },
         {
           "id": "register",
@@ -94,7 +95,8 @@
           "preconditions": [],
           "transitions_to": "document_search",
           "api_endpoint": "/api/auth/register",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "secondary"
         },
         {
           "id": "browse_without_login",
@@ -105,10 +107,12 @@
           "preconditions": [],
           "transitions_to": "document_search",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "To start: login with your credentials"
     },
     {
       "id": "document_search",
@@ -192,7 +196,8 @@
           "preconditions": [],
           "transitions_to": "document_search",
           "api_endpoint": "/api/documents",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "view_document",
@@ -214,7 +219,8 @@
           "preconditions": [],
           "transitions_to": "document_detail",
           "api_endpoint": "/api/documents/{doc_id}",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "view_departments",
@@ -225,7 +231,8 @@
           "preconditions": [],
           "transitions_to": "department_list",
           "api_endpoint": "/api/departments",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "secondary"
         },
         {
           "id": "track_request",
@@ -247,10 +254,12 @@
           "preconditions": [],
           "transitions_to": "request_status",
           "api_endpoint": "/api/requests/{req_id}",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "secondary"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "To request a document: search_documents \u2192 view_document with the doc id"
     },
     {
       "id": "document_detail",
@@ -389,7 +398,8 @@
           "preconditions": [],
           "transitions_to": "request_status",
           "api_endpoint": "/api/requests",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "primary"
         },
         {
           "id": "back_to_search",
@@ -400,10 +410,12 @@
           "preconditions": [],
           "transitions_to": "document_search",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": "document_search"
+      "parent": "document_search",
+      "flow_hint": "To request this document: submit_request with the document details"
     },
     {
       "id": "department_list",
@@ -445,7 +457,8 @@
           "preconditions": [],
           "transitions_to": "document_search",
           "api_endpoint": "/api/documents",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "back_to_search_from_depts",
@@ -456,10 +469,12 @@
           "preconditions": [],
           "transitions_to": "document_search",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "Browse departments. Use search_by_department to filter documents."
     },
     {
       "id": "request_status",
@@ -525,7 +540,8 @@
           "preconditions": [],
           "transitions_to": "request_status",
           "api_endpoint": "/api/requests/{req_id}/requirements",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "new_search",
@@ -536,10 +552,12 @@
           "preconditions": [],
           "transitions_to": "document_search",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "Request submitted. Use check_requirements to see what is needed."
     }
   ],
   "entry_screen": "auth_gate",
@@ -547,8 +565,9 @@
     "requests_per_minute": 30,
     "requests_per_hour": 500,
     "requests_per_day": 5000,
-    "max_concurrent_sessions": 1,
-    "max_items_per_action": null
+    "max_concurrent_sessions": 10,
+    "max_items_per_action": null,
+    "max_transaction_amount": 100.0
   },
   "data_terms": {
     "default_retention": "session",

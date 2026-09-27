@@ -22,7 +22,7 @@ Usage:
   GET /terminals/tesserastay   → get one terminal's details
 """
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
@@ -77,12 +77,12 @@ def check_terminal_health(terminal: TerminalRegistration) -> bool:
             terminal.entry_screen = info.get("entry_screen", terminal.entry_screen)
             terminal.screens = info.get("screens", terminal.screens)
             terminal.healthy = True
-            terminal.last_health_check = datetime.utcnow().isoformat()
+            terminal.last_health_check = datetime.now(timezone.utc).isoformat()
             return True
     except Exception:
         pass
     terminal.healthy = False
-    terminal.last_health_check = datetime.utcnow().isoformat()
+    terminal.last_health_check = datetime.now(timezone.utc).isoformat()
     return False
 
 
@@ -151,7 +151,7 @@ def register_terminal(req: RegisterRequest) -> TerminalRegistration:
         category=req.category,
         tags=req.tags,
         site_url=req.site_url,
-        registered_at=datetime.utcnow().isoformat(),
+        registered_at=datetime.now(timezone.utc).isoformat(),
     )
     TERMINALS[req.id] = terminal
     return terminal

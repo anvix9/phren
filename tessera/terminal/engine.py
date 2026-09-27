@@ -11,7 +11,7 @@ import json
 import re
 import uuid
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from tessera.contract.schema import (
@@ -20,6 +20,7 @@ from tessera.contract.schema import (
     ContractAcceptance, ResolvedPermissions, AuditLogEntry,
 )
 from tessera.contract.resolver import resolve_permissions
+from tessera.contract.enforcement import enforce_connect, enforce_action
 
 
 class TerminalSession:
@@ -34,12 +35,17 @@ class TerminalSession:
         self.current_screen: str = contract.entry_screen
         self.state: dict = {}           # Runtime state (cart_id, etc.)
         self.audit_log: list[AuditLogEntry] = []
-        self.created_at = datetime.utcnow().isoformat()
+        self.created_at = datetime.now(timezone.utc).isoformat()
         self.action_count = 0
 
     def log(self, action: str, params: dict, result: str,
             error_message: str = None, denied_reason: str = None):
         """Record an action in the audit log."""
+        # Coerce error_message to string (can be a list from Pydantic validation)
+        if error_message is not None and not isinstance(error_message, str):
+            error_message = str(error_message)
+        if denied_reason is not None and not isinstance(denied_reason, str):
+            denied_reason = str(denied_reason)
         entry = AuditLogEntry(
             session_id=self.session_id,
             contract_id=self.contract.contract_id,
@@ -79,6 +85,11 @@ class TranslationProxy:
 
         # Restructure flat params into nested objects where needed
         api_params = self._restructure_params(action, params, session_state)
+
+        # Strip empty strings — agent sends "" for optional params but API
+        # treats "" as an invalid value, not as "omitted"
+        api_params = {k: v for k, v in api_params.items()
+                      if v is not None and v != ""}
 
         # Build headers — include auth token if available
         headers = {"Content-Type": "application/json"}
@@ -216,6 +227,12 @@ class TesseraTerminal:
                           "Provide at minimum an 'identified' trust level.",
             }
 
+        # Phase 2: Governance enforcement at connect
+        active_count = len(self.sessions)
+        allowed, reason = enforce_connect(self.contract, active_count)
+        if not allowed:
+            return {"status": "denied", "reason": reason}
+
         # Resolve permissions
         permissions = resolve_permissions(self.contract, agent)
 
@@ -276,6 +293,7 @@ class TesseraTerminal:
                 "id": action.id,
                 "name": action.name,
                 "description": action.description,
+                "role": action.role.value if hasattr(action.role, 'value') else str(action.role),
                 "status": status,
                 "parameters": [
                     {
@@ -303,6 +321,7 @@ class TesseraTerminal:
                 "id": screen.id,
                 "name": screen.name,
                 "description": screen.description,
+                "flow_hint": screen.flow_hint,
             },
             "data": screen_data,
             "actions": available_actions,
@@ -362,10 +381,14 @@ class TesseraTerminal:
                 "params": params,
             }
 
-        # Check rate limits
-        if not self._check_rate_limit(session):
-            session.log(action_id, params, "denied", denied_reason="Rate limit exceeded")
-            return {"status": "denied", "reason": "Rate limit exceeded"}
+        # Phase 2: Full governance enforcement
+        allowed, reason = enforce_action(
+            self.contract, session.agent, session.permissions,
+            session.audit_log, action_id, params,
+        )
+        if not allowed:
+            session.log(action_id, params, "denied", denied_reason=reason)
+            return {"status": "denied", "reason": reason}
 
         # Validate required parameters
         for p_def in action_def.parameters:
@@ -522,7 +545,7 @@ class TesseraTerminal:
         limits = self.contract.rate_limits
         if limits.requests_per_minute:
             # Count actions in last minute
-            one_min_ago = datetime.utcnow().timestamp() - 60
+            one_min_ago = datetime.now(timezone.utc).timestamp() - 60
             recent = [e for e in session.audit_log
                       if datetime.fromisoformat(e.timestamp).timestamp() > one_min_ago]
             if len(recent) >= limits.requests_per_minute:

@@ -9,10 +9,10 @@ The contract is presented to the agent BEFORE any interaction begins.
 The agent's planning layer reads the contract and prunes its action space accordingly —
 prohibited actions literally don't exist in the agent's environment.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # ── Enums ──
@@ -56,6 +56,13 @@ class ActionParameter(BaseModel):
     default: Optional[str] = None
 
 
+class ActionRole(str, Enum):
+    """Role of an action in the navigation flow."""
+    PRIMARY = "primary"           # The main forward step (add_to_cart, checkout, submit)
+    SECONDARY = "secondary"       # Useful but not progress (update_qty, apply_coupon, filter)
+    NAVIGATION = "navigation"     # Go back or lateral move (back_to_search, view_profile)
+
+
 class ActionDefinition(BaseModel):
     """
     A single action available in the Tessera terminal.
@@ -64,6 +71,7 @@ class ActionDefinition(BaseModel):
     id: str                                       # Unique action identifier, e.g. "add_to_cart"
     name: str                                     # Human-readable name
     description: str                              # What this action does
+    role: ActionRole = ActionRole.SECONDARY       # Flow role: primary, secondary, navigation
     permission: ActionPermission = ActionPermission.ALLOWED
     parameters: list[ActionParameter] = []
     preconditions: list[str] = []                 # Conditions that must be true, e.g. "stock_status != out_of_stock"
@@ -90,6 +98,7 @@ class ScreenDefinition(BaseModel):
     id: str                                       # Unique screen identifier, e.g. "product_detail"
     name: str                                     # Human-readable name
     description: str
+    flow_hint: Optional[str] = None               # Plain-text hint: "To buy: add_to_cart → checkout"
     parameters: list[str] = []                    # Required params to reach this screen, e.g. ["product_id"]
     data_fields: list[DataField] = []             # What data is visible
     actions: list[ActionDefinition] = []          # What the agent can do here
@@ -105,6 +114,8 @@ class RateLimit(BaseModel):
     requests_per_day: Optional[int] = None
     max_concurrent_sessions: int = 1
     max_items_per_action: Optional[int] = None    # e.g., max 5 items per add_to_cart
+    max_transaction_amount: Optional[float] = None  # Site owner's per-transaction ceiling (USD)
+    max_daily_spend: Optional[float] = None         # Site owner's daily spend ceiling (USD)
 
 
 # ── Data Handling Terms ──
@@ -200,7 +211,7 @@ class TesseraContract(BaseModel):
     site_url: str
     description: str = ""
     tier: ContractTier = ContractTier.STANDARD
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     expires_at: Optional[str] = None
 
     # The terminal structure
@@ -227,6 +238,40 @@ class TesseraContract(BaseModel):
     log_all_actions: bool = True
     log_data_access: bool = True
 
+    # Validation: deny-by-default for spend paths
+    @model_validator(mode="after")
+    def validate_spend_limits(self):
+        """
+        If the contract allows transaction-level trust (verified or super_agent),
+        it MUST specify spend limits. A contract that permits transactions but
+        omits max_transaction_amount is fail-open — the omission is dangerous,
+        not harmless. This makes it impossible rather than just bad practice.
+        """
+        allows_transactions = False
+
+        # Check if any trust override or default allows verified/super_agent
+        for req in self.action_trust_requirements:
+            if req.min_trust_level in (AgentTrust.VERIFIED, AgentTrust.SUPER_AGENT):
+                allows_transactions = True
+                break
+        for action_id, tier in self.trust_overrides.items():
+            if tier in (AgentTrust.VERIFIED, AgentTrust.SUPER_AGENT):
+                allows_transactions = True
+                break
+
+        if allows_transactions:
+            if self.rate_limits.max_transaction_amount is None:
+                import warnings
+                warnings.warn(
+                    f"Contract '{self.contract_id}' allows verified/super_agent trust "
+                    f"but has no max_transaction_amount. Set rate_limits.max_transaction_amount "
+                    f"to establish a per-transaction ceiling.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+
+        return self
+
 
 # ── Contract Acceptance ──
 
@@ -246,7 +291,7 @@ class ContractAcceptance(BaseModel):
     """Record of an agent accepting a contract."""
     contract_id: str
     agent: AgentProfile
-    accepted_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    accepted_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     session_id: str = ""
     resolved_permissions: Optional[ResolvedPermissions] = None
 
@@ -260,7 +305,7 @@ class AuditLogEntry(BaseModel):
     agent_provider: str
     agent_name: str
     agent_trust: AgentTrust = AgentTrust.ANONYMOUS
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     screen: str
     action: str
     parameters: dict = {}

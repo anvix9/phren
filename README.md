@@ -1,87 +1,126 @@
-# Tessera — Agent Terminal for the Web
+# Tessera — Governed Terminals for AI Agents
 
-Tessera compiles any website into a structured, governed terminal that AI agents navigate via MCP. Instead of parsing DOM trees or taking screenshots, agents get named screens with typed actions — a CLI for the web.
+Tessera compiles any website into a **terminal** — a governed, navigable layer between AI agents and web APIs. Agents navigate terminals via MCP to complete tasks like purchasing, booking, or requesting documents.
+
+## Why not just give agents the API?
+
+```
+┌──────────────────────────────────────────────┐
+│              MCP (protocol)                  │
+│  How the agent talks to tools                │
+│                                              │
+│  ┌────────────────────────────────────────┐  │
+│  │         TERMINAL (governance)          │  │
+│  │  What the agent is allowed to do       │  │
+│  │  Where it should go next               │  │
+│  │  What it already did                   │  │
+│  │                                        │  │
+│  │  ┌──────────────────────────────────┐  │  │
+│  │  │         API (execution)          │  │  │
+│  │  │  The actual HTTP calls           │  │  │
+│  │  └──────────────────────────────────┘  │  │
+│  └────────────────────────────────────────┘  │
+└──────────────────────────────────────────────┘
+
+MCP is the WIRE.  The API is the DESTINATION.
+The terminal is the RULES + MAP + MEMORY in between.
+```
+
+| | Raw API | MCP Tools | Browser Agent | **Tessera Terminal** |
+|---|---|---|---|---|
+| **Governance** | None | None | None | Trust tiers, spend limits, rate limits |
+| **Flow guidance** | None | None | None | Roles, hints, path trace |
+| **Min model size** | N/A (code) | ~7B | ~70B (vision) | **0.8B** |
+| **Speed** | Instant | ~1s/call | 5-30s/action | **0.3-1s/action** |
+| **Cost per task** | ¢ | ¢ | $$$ | **¢** |
+
+![Terminal vs Browser Agent](docs/plots/terminal_vs_browser.png)
+
+## Agent eval results
+
+**6 models × 7 tasks × 3 trials = 126/126 (100%)**
+
+| Model | Params | Family | pass@1 | Avg Steps | Avg Invalid | Avg Time |
+|-------|--------|--------|--------|-----------|-------------|----------|
+| qwen3.5:0.8b | 0.8B | Alibaba | **21/21** | 10.1 | 3.5 | 41s |
+| lfm2.5-thinking | 1.2B | Liquid | **21/21** | 10.1 | 3.3 | 60s |
+| llama3.2:3b | 3B | Meta | **21/21** | 10.4 | 3.1 | 4.4s |
+| granite4.1:3b | 3B | IBM | **21/21** | 10.4 | 1.8 | 6.9s |
+| qwen3:4b | 4B | Alibaba | **21/21** | 8.1 | 2.6 | 175s |
+| qwen3:8b | 8B | Alibaba | **21/21** | 7.1 | 1.8 | 266s |
+
+![Speed per Task](docs/plots/speed_per_task.png)
+
+![Steps Breakdown](docs/plots/steps_breakdown.png)
+
+**Key finding:** terminal design — not model size — determines agent success. The same models that scored 0% without the terminal's path trace now score 100%.
+
+![Design Iteration Impact](docs/plots/design_iteration.png)
+
+## What the terminal does for agents
+
+**1. Flow map with roles.** Actions are marked as primary (move forward), secondary (optional), or navigation (go back). Each screen carries a flow hint from the contract.
+
+**2. Path trace.** The agent sees where it's been and what it found:
+
+```
+PATH SO FAR:
+  ✅ [0] login → got auth token
+  ✅ [1] search → found 3: Budget Laptop ($399) [id:prod_004]
+  ✅ [2] view_product → name=Budget Laptop
+
+SUGGESTED NEXT: add_to_cart (needs: product_id, quantity)
+```
+
+**3. Governance enforcement.** Every contract field binds at runtime: trust tiers, spend limits, rate limits, confirmation gates. The terminal checks all constraints before proxying any action to the real API.
+
+## How it works
+
+```
+your-website/api/main.py
+        │
+        ▼  source parser (10 frameworks)
+discovered routes
+        │
+        ▼  terminal compiler
+contract.json (governance + flow map + tools)
+        │
+        ▼  terminal engine
+MCP server (JSON-RPC, stdio + HTTP)
+        │
+        ▼  agent connects, navigates, completes tasks
+```
 
 ## Install
 
 ```bash
 pip install -e ".[dev]"
+pytest evals/ conformance/ -v        # 180 tests
 ```
 
-## What it does
+## Run agent evals
 
-1. **Compiler** reads your route definitions from source code (10 web frameworks supported)
-2. **Contract** wraps discovered routes in a governance layer (permissions, rate limits, trust tiers)
-3. **Terminal** exposes the contract as MCP tools that any agent can call
-4. **Agent** navigates the terminal to complete tasks
-
-## Quick start
-
-```python
-from tessera.compiler.source_parser import SourceRouteParser
-
-# Point at your codebase — extracts all API routes
-parser = SourceRouteParser("/path/to/your/project")
-routes = parser.parse()
-print(f"Found {len(routes)} routes")
+```bash
+ollama pull llama3.2:3b
+python3 -m evals.agent_eval --task all --model llama3.2:3b --trials 3 -v
 ```
+
+## Trust model
+
+Trust is derived from Ed25519-signed credentials, never self-declared. The terminal verifies the signature, checks expiration, validates the audience, rejects replayed tokens, and caps the trust tier at the operator's registered maximum.
 
 ## Supported frameworks
 
-| Framework | Pattern | Tested on |
-|-----------|---------|-----------|
-| FastAPI | `@app.get("/path")` | RealWorld, FastAPI Full-Stack |
-| Rails | `resources :name` | Forem/dev.to (341 routes) |
-| Go (Chi/Echo) | `m.Get("/path")` | Gitea (162 routes) |
-| NestJS | `@Controller()` + `@Get()` | Twenty CRM (101 routes) |
-| Next.js files | `_get.ts`, `_post.ts` | Cal.com (131 routes) |
-| Next.js App Router | `route.ts` | Medusa (51 routes) |
-| Next.js pages | `export default` + `req.method` | Papermark (379 routes) |
-| tRPC | `router({})` procedures | Documenso (102 routes) |
-| PHP/Utopia | `Http::get('/path')` | Appwrite (186 routes) |
-| Laravel | `Route::get()`, `Route::apiResource()` | Firefly III (502 routes) |
+FastAPI, Rails, Go (Chi/Echo), NestJS, Next.js (files/App Router/pages), tRPC, PHP/Laravel. 13 GitHub repos tested: **2,203 routes, 100% precision.**
 
-## Benchmarks
+## Positioning
 
-Source parser tested against 13 real GitHub repos: **2,203 routes extracted, 100% precision (zero false positives).**
-
-Verified accuracy on repos with known ground truth:
-
-| Repo | Found/Actual | Precision |
-|------|-------------|-----------|
-| Appwrite | 186/187 | 100% |
-| Cal.com | 82/82 | 100% |
-| Medusa | 51/52 | 100% |
-| RealWorld | 19/19 | 100% |
-
-Full evaluation data in [BENCHMARKS.md](BENCHMARKS.md).
-
-## Project structure
-
-```
-tessera/               # Python package (Apache-2.0)
-├── compiler/          # Route discovery (source parser, HTTP probing, OpenAPI)
-├── contract/          # Governance schema + permission resolver
-├── terminal/          # Engine, agents, registry
-└── mcp/               # MCP server
-simulations/           # 18 test sites (525 endpoints)
-evals/                 # Test suite (pytest)
-```
-
-## Running tests
-
-```bash
-pytest evals/ -v
-```
+**Stripe ACP / Google UCP** handle the payment rail. **Tessera** handles what the agent is *permitted* to do, proves what it *did*, and guides it through the *flow*. They are complementary.
 
 ## Known limitations
 
-- **Workflow inference:** The compiler extracts routes, not workflows. It knows `GET /products` and `POST /orders` exist but doesn't know the ordering `search → cart → checkout → payment`. This is the next frontier.
-- **Trust model:** Currently allows caller-supplied trust tiers (fix in Phase 1 — see [SECURITY.md](SECURITY.md)).
-- **MCP compliance:** Server is REST/FastAPI, not yet spec-compliant MCP with JSON-RPC (Phase 3).
+These results cover linear happy paths on 3 hand-written simulations. Not yet tested: complex branching paths, error recovery, real websites, or compiler-generated contracts.
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE).
-
-The open core is fully functional standalone. Commercial features (registry, analytics, audit) will live in a separate repository and consume `tessera` as a dependency — never the inverse.
+Apache-2.0. Open core never imports the commercial layer.

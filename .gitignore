@@ -32,5 +32,3 @@ htmlcov/
 # Build
 *.whl
 *.tar.gz
-
-./archives/

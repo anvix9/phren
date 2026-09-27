@@ -523,6 +523,6 @@ class OwnerDiscovery:
             "auth_type": self.auth_type,
             "total_endpoints": len(self.endpoints),
             "total_resources": len(self.resources),
-            "discovered_at": datetime.utcnow().isoformat(),
+            "discovered_at": datetime.now(timezone.utc).isoformat(),
             "paths": paths,
         }

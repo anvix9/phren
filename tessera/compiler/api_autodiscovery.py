@@ -887,7 +887,7 @@ class APIAutoDiscovery:
             "tessera_autodiscovery": True,
             "base_url": self.base_url,
             "api_prefix": self.api_prefix,
-            "discovered_at": datetime.utcnow().isoformat(),
+            "discovered_at": datetime.now(timezone.utc).isoformat(),
             "auth_available": self.token is not None,
             "total_endpoints": len(self.endpoints),
             "total_resources": len(self.resources),

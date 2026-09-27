@@ -1,0 +1,634 @@
+{
+  "$defs": {
+    "ActionDefinition": {
+      "description": "A single action available in the Tessera terminal.\nMaps to one thing the agent can do.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/ActionRole",
+          "default": "secondary"
+        },
+        "permission": {
+          "$ref": "#/$defs/ActionPermission",
+          "default": "allowed"
+        },
+        "parameters": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActionParameter"
+          },
+          "title": "Parameters",
+          "type": "array"
+        },
+        "preconditions": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Preconditions",
+          "type": "array"
+        },
+        "transitions_to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Transitions To"
+        },
+        "api_endpoint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Api Endpoint"
+        },
+        "api_method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Api Method"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ],
+      "title": "ActionDefinition",
+      "type": "object"
+    },
+    "ActionParameter": {
+      "description": "A single parameter for an action.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "enum_values": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enum Values"
+        },
+        "min_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Value"
+        },
+        "max_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Value"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "title": "ActionParameter",
+      "type": "object"
+    },
+    "ActionPermission": {
+      "description": "Permission level for an action.",
+      "enum": [
+        "allowed",
+        "requires_confirmation",
+        "prohibited"
+      ],
+      "title": "ActionPermission",
+      "type": "string"
+    },
+    "ActionRole": {
+      "description": "Role of an action in the navigation flow.",
+      "enum": [
+        "primary",
+        "secondary",
+        "navigation"
+      ],
+      "title": "ActionRole",
+      "type": "string"
+    },
+    "ActionTrustRequirement": {
+      "description": "Per-action trust requirements set by the website owner.",
+      "properties": {
+        "action_id": {
+          "title": "Action Id",
+          "type": "string"
+        },
+        "min_trust_level": {
+          "$ref": "#/$defs/AgentTrust",
+          "default": "identified"
+        },
+        "requires_user_delegation": {
+          "default": false,
+          "title": "Requires User Delegation",
+          "type": "boolean"
+        },
+        "max_amount": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Amount"
+        }
+      },
+      "required": [
+        "action_id"
+      ],
+      "title": "ActionTrustRequirement",
+      "type": "object"
+    },
+    "AgentTrust": {
+      "description": "Trust level determines what the agent can do autonomously.\nThe website owner defines which actions require which trust level.\nThe agent passes its profile; the terminal resolves the effective permissions.",
+      "enum": [
+        "anonymous",
+        "identified",
+        "verified",
+        "super_agent"
+      ],
+      "title": "AgentTrust",
+      "type": "string"
+    },
+    "ContractTier": {
+      "description": "Access tiers that website owners can define.",
+      "enum": [
+        "public",
+        "standard",
+        "premium",
+        "partner"
+      ],
+      "title": "ContractTier",
+      "type": "string"
+    },
+    "DataField": {
+      "description": "A single data field visible on a screen.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "example": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Example"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "title": "DataField",
+      "type": "object"
+    },
+    "DataRetention": {
+      "description": "How long agent may retain data from responses.",
+      "enum": [
+        "none",
+        "session",
+        "24h",
+        "7d",
+        "30d",
+        "unlimited"
+      ],
+      "title": "DataRetention",
+      "type": "string"
+    },
+    "DataTerms": {
+      "description": "Rules for how the agent may handle data received from the terminal.",
+      "properties": {
+        "default_retention": {
+          "$ref": "#/$defs/DataRetention",
+          "default": "session"
+        },
+        "field_overrides": {
+          "additionalProperties": {
+            "$ref": "#/$defs/DataRetention"
+          },
+          "default": {},
+          "title": "Field Overrides",
+          "type": "object"
+        },
+        "allow_aggregation": {
+          "default": false,
+          "title": "Allow Aggregation",
+          "type": "boolean"
+        },
+        "allow_storage": {
+          "default": false,
+          "title": "Allow Storage",
+          "type": "boolean"
+        },
+        "require_attribution": {
+          "default": false,
+          "title": "Require Attribution",
+          "type": "boolean"
+        },
+        "attribution_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attribution Text"
+        }
+      },
+      "title": "DataTerms",
+      "type": "object"
+    },
+    "RateLimit": {
+      "description": "Rate limiting configuration.",
+      "properties": {
+        "requests_per_minute": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requests Per Minute"
+        },
+        "requests_per_hour": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requests Per Hour"
+        },
+        "requests_per_day": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requests Per Day"
+        },
+        "max_concurrent_sessions": {
+          "default": 1,
+          "title": "Max Concurrent Sessions",
+          "type": "integer"
+        },
+        "max_items_per_action": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Items Per Action"
+        },
+        "max_transaction_amount": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Transaction Amount"
+        },
+        "max_daily_spend": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Daily Spend"
+        }
+      },
+      "title": "RateLimit",
+      "type": "object"
+    },
+    "ScreenDefinition": {
+      "description": "A single screen in the Tessera terminal.\nRepresents one \"state\" of the website from the agent's perspective.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "flow_hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Flow Hint"
+        },
+        "parameters": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Parameters",
+          "type": "array"
+        },
+        "data_fields": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DataField"
+          },
+          "title": "Data Fields",
+          "type": "array"
+        },
+        "actions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActionDefinition"
+          },
+          "title": "Actions",
+          "type": "array"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ],
+      "title": "ScreenDefinition",
+      "type": "object"
+    }
+  },
+  "description": "The complete contract for a Tessera terminal.\n\nThis is presented to agents before any interaction.\nThe agent must accept the contract to proceed.\nAll interactions are logged against the accepted contract.",
+  "properties": {
+    "contract_id": {
+      "title": "Contract Id",
+      "type": "string"
+    },
+    "version": {
+      "default": "0.1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "site_name": {
+      "title": "Site Name",
+      "type": "string"
+    },
+    "site_url": {
+      "title": "Site Url",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "tier": {
+      "$ref": "#/$defs/ContractTier",
+      "default": "standard"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "expires_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expires At"
+    },
+    "screens": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ScreenDefinition"
+      },
+      "title": "Screens",
+      "type": "array"
+    },
+    "entry_screen": {
+      "default": "",
+      "title": "Entry Screen",
+      "type": "string"
+    },
+    "rate_limits": {
+      "$ref": "#/$defs/RateLimit"
+    },
+    "data_terms": {
+      "$ref": "#/$defs/DataTerms"
+    },
+    "prohibited_actions": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Prohibited Actions",
+      "type": "array"
+    },
+    "required_confirmations": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Confirmations",
+      "type": "array"
+    },
+    "action_trust_requirements": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ActionTrustRequirement"
+      },
+      "title": "Action Trust Requirements",
+      "type": "array"
+    },
+    "default_trust_for_actions": {
+      "$ref": "#/$defs/AgentTrust",
+      "default": "identified"
+    },
+    "trust_overrides": {
+      "additionalProperties": {
+        "$ref": "#/$defs/AgentTrust"
+      },
+      "default": {},
+      "title": "Trust Overrides",
+      "type": "object"
+    },
+    "require_identification": {
+      "default": true,
+      "title": "Require Identification",
+      "type": "boolean"
+    },
+    "allowed_purposes": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Purposes",
+      "type": "array"
+    },
+    "blocked_providers": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Blocked Providers",
+      "type": "array"
+    },
+    "log_all_actions": {
+      "default": true,
+      "title": "Log All Actions",
+      "type": "boolean"
+    },
+    "log_data_access": {
+      "default": true,
+      "title": "Log Data Access",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "contract_id",
+    "site_name",
+    "site_url"
+  ],
+  "title": "TesseraContract",
+  "type": "object"
+}

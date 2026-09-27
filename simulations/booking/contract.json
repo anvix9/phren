@@ -1,7 +1,7 @@
 {
-  "contract_id": "subway_booking_v2_auth",
+  "contract_id": "tessera_booking_v2",
   "version": "0.2.0",
-  "site_name": "SubwayStay Hotel Booking (with Auth)",
+  "site_name": "Tessera Booking Demo",
   "site_url": "http://localhost:8002",
   "description": "Hotel booking service with authentication. Agents must login or register before making reservations. Hotel and room browsing is public. Test accounts: alice@example.com/password123, bob@example.com/securepass",
   "tier": "standard",
@@ -52,7 +52,8 @@
           "preconditions": [],
           "transitions_to": "hotel_search",
           "api_endpoint": "/api/auth/login",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "primary"
         },
         {
           "id": "register",
@@ -94,7 +95,8 @@
           "preconditions": [],
           "transitions_to": "hotel_search",
           "api_endpoint": "/api/auth/register",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "secondary"
         },
         {
           "id": "browse_without_login",
@@ -105,10 +107,12 @@
           "preconditions": [],
           "transitions_to": "hotel_search",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "To start: login with your credentials"
     },
     {
       "id": "hotel_search",
@@ -220,7 +224,8 @@
           "preconditions": [],
           "transitions_to": "hotel_search",
           "api_endpoint": "/api/hotels",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "view_hotel",
@@ -242,7 +247,8 @@
           "preconditions": [],
           "transitions_to": "hotel_detail",
           "api_endpoint": "/api/hotels/{hotel_id}",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "view_rooms_direct",
@@ -294,7 +300,8 @@
           "preconditions": [],
           "transitions_to": "room_list",
           "api_endpoint": "/api/hotels/{hotel_id}/rooms",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "quick_book",
@@ -366,10 +373,12 @@
           "preconditions": [],
           "transitions_to": "reservation_confirmation",
           "api_endpoint": "/api/reservations",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "secondary"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "To book: search_hotels to find hotels \u2192 view_rooms_direct to see rooms"
     },
     {
       "id": "hotel_detail",
@@ -473,7 +482,8 @@
           "preconditions": [],
           "transitions_to": "room_list",
           "api_endpoint": "/api/hotels/{hotel_id}/rooms",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "back_to_hotel_search",
@@ -484,10 +494,12 @@
           "preconditions": [],
           "transitions_to": "hotel_search",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": "hotel_search"
+      "parent": "hotel_search",
+      "flow_hint": "To see available rooms: view_rooms"
     },
     {
       "id": "room_list",
@@ -549,7 +561,8 @@
           "preconditions": [],
           "transitions_to": "room_detail",
           "api_endpoint": "/api/rooms/{room_id}",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "book_room",
@@ -621,7 +634,8 @@
           "preconditions": [],
           "transitions_to": "reservation_confirmation",
           "api_endpoint": "/api/reservations",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "primary"
         },
         {
           "id": "back_to_hotel",
@@ -632,10 +646,12 @@
           "preconditions": [],
           "transitions_to": "hotel_detail",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": "hotel_detail"
+      "parent": "hotel_detail",
+      "flow_hint": "To book: view_room to see details \u2192 then book_room"
     },
     {
       "id": "room_detail",
@@ -743,7 +759,8 @@
           "preconditions": [],
           "transitions_to": "reservation_confirmation",
           "api_endpoint": "/api/reservations",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "primary"
         },
         {
           "id": "back_to_rooms",
@@ -754,10 +771,12 @@
           "preconditions": [],
           "transitions_to": "room_list",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": "room_list"
+      "parent": "room_list",
+      "flow_hint": "To book this room: book_this_room"
     },
     {
       "id": "reservation_confirmation",
@@ -811,7 +830,8 @@
           "preconditions": [],
           "transitions_to": "reservation_confirmation",
           "api_endpoint": "/api/reservations/{res_id}",
-          "api_method": "GET"
+          "api_method": "GET",
+          "role": "primary"
         },
         {
           "id": "cancel_reservation",
@@ -833,7 +853,8 @@
           "preconditions": [],
           "transitions_to": "reservation_confirmation",
           "api_endpoint": "/api/reservations/{res_id}/cancel",
-          "api_method": "POST"
+          "api_method": "POST",
+          "role": "secondary"
         },
         {
           "id": "new_search",
@@ -844,10 +865,12 @@
           "preconditions": [],
           "transitions_to": "hotel_search",
           "api_endpoint": null,
-          "api_method": null
+          "api_method": null,
+          "role": "navigation"
         }
       ],
-      "parent": null
+      "parent": null,
+      "flow_hint": "Booking complete. Use check_reservation to verify."
     }
   ],
   "entry_screen": "auth_gate",
@@ -855,8 +878,10 @@
     "requests_per_minute": 30,
     "requests_per_hour": 500,
     "requests_per_day": 5000,
-    "max_concurrent_sessions": 1,
-    "max_items_per_action": null
+    "max_concurrent_sessions": 10,
+    "max_items_per_action": null,
+    "max_transaction_amount": 1000.0,
+    "max_daily_spend": 5000.0
   },
   "data_terms": {
     "default_retention": "session",

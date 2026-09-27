@@ -1,13 +1,13 @@
-# Subway — Discovery Benchmarks
+# Tessera — Discovery Benchmarks
 
 ## Overview
 
-Subway compiles any website into a structured terminal interface for AI agents.
+Tessera compiles any website into a structured terminal interface for AI agents.
 The compiler's job: discover every API endpoint a site exposes, then generate
-a Subway contract from them.
+a Tessera contract from them.
 
 We built 4 discovery tools and tested them against 13 real GitHub repos
-and 17 simulation sites.
+and 18 simulation sites.
 
 ---
 
@@ -229,3 +229,14 @@ Twenty CRM, Hoppscotch, Papermark, Documenso, Appwrite, Firefly III, Koel.
 - **Compound identifiers:** `/repos/{owner}/{repo}` requires knowing valid pairs
 - **Deep nesting:** max 1-level sub-resource; 2+ levels missed
 - **False positives:** structural inference can over-reach (61% precision)
+
+### Resolved in this version
+- ~~**Self-declared trust**~~ → Fixed (Phase 1). Ed25519-signed credentials, regression-tested.
+- ~~**Governance fields inert**~~ → Fixed (Phase 2). Every contract field binds at runtime.
+- ~~**Operator-declared money limits**~~ → Fixed (Audit). Contract ceiling overrides operator claims.
+- ~~**MCP compliance**~~ → Fixed (Phase 3). Official MCP SDK, JSON-RPC, conformance suite.
+- ~~**No credential hygiene**~~ → Fixed (Audit). Audience, replay protection, TTL cap.
+
+### Remaining
+- **Workflow inference:** The compiler extracts routes, not workflows. `search → cart → checkout` ordering must be inferred or declared.
+- **LLM agent evals:** Governance boundary tested with scripted sequences. pass@1 with real LLM agents (Phase 5b) requires Ollama.
