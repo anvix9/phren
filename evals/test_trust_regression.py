@@ -1,5 +1,5 @@
 """
-Tessera Phase 1 — Trust Regression Tests (updated for real MCP server)
+Phren Phase 1 — Trust Regression Tests (updated for real MCP server)
 
 THE critical test: prove that the self-declared trust vulnerability is fixed.
 
@@ -16,14 +16,14 @@ import os
 import asyncio
 from pathlib import Path
 
-from tessera.contract.operator_registry import (
+from phren.contract.operator_registry import (
     OperatorRegistry, OperatorTier, generate_operator_keypair,
 )
-from tessera.contract.credentials import sign_agent_credential
-from tessera.contract.schema import TesseraContract, AgentTrust
-from tessera.terminal.engine import TesseraTerminal
-from tessera.mcp.server import (
-    create_tessera_mcp, TOOLS,
+from phren.contract.credentials import sign_agent_credential
+from phren.contract.schema import PhrenContract, AgentTrust
+from phren.terminal.engine import PhrenTerminal
+from phren.mcp.server import (
+    create_phren_mcp, TOOLS,
     _make_call_tool_handler, _make_list_tools_handler,
 )
 
@@ -51,8 +51,8 @@ def setup(tmp_path):
     evil_priv, _ = generate_operator_keypair()
 
     # Terminal + handlers
-    contract = TesseraContract(**contract_data)
-    terminal = TesseraTerminal(contract, "http://localhost:9999")
+    contract = PhrenContract(**contract_data)
+    terminal = PhrenTerminal(contract, "http://localhost:9999")
     call_handler = _make_call_tool_handler(terminal, registry)
 
     # Also a handler WITHOUT registry (anonymous-only mode)
@@ -81,22 +81,22 @@ class TestSelfDeclaredTrustRejected:
     """THE REGRESSION TEST — proves Phase 1 vulnerability is fixed."""
 
     def test_trust_level_field_does_not_exist(self):
-        """The MCP tool tessera_connect must NOT accept trust_level."""
-        connect_tool = next(t for t in TOOLS if t.name == "tessera_connect")
+        """The MCP tool phren_connect must NOT accept trust_level."""
+        connect_tool = next(t for t in TOOLS if t.name == "phren_connect")
         props = connect_tool.input_schema.get("properties", {})
         assert "trust_level" not in props, \
-            "VULNERABILITY: trust_level is accepted by tessera_connect"
+            "VULNERABILITY: trust_level is accepted by phren_connect"
 
     def test_can_transact_field_does_not_exist(self):
-        """The MCP tool tessera_connect must NOT accept can_transact."""
-        connect_tool = next(t for t in TOOLS if t.name == "tessera_connect")
+        """The MCP tool phren_connect must NOT accept can_transact."""
+        connect_tool = next(t for t in TOOLS if t.name == "phren_connect")
         props = connect_tool.input_schema.get("properties", {})
         assert "can_transact" not in props, \
-            "VULNERABILITY: can_transact is accepted by tessera_connect"
+            "VULNERABILITY: can_transact is accepted by phren_connect"
 
     def test_old_format_ignored(self, setup):
         """Sending old fields has no effect — extra args are ignored."""
-        data = _call_sync(setup["call"], "tessera_connect", {
+        data = _call_sync(setup["call"], "phren_connect", {
             "trust_level": "super_agent",
             "can_transact": True,
         })
@@ -111,7 +111,7 @@ class TestSelfDeclaredTrustRejected:
         token = sign_agent_credential(
             setup["evil_priv"], "test-op", "forged-agent", tier="super_agent",
         )
-        data = _call_sync(setup["call"], "tessera_connect", {"credential": token})
+        data = _call_sync(setup["call"], "phren_connect", {"credential": token})
         assert data.get("error") == "invalid_signature"
 
     def test_tier_capped_at_operator_max(self, setup):
@@ -119,7 +119,7 @@ class TestSelfDeclaredTrustRejected:
         token = sign_agent_credential(
             setup["priv_key"], "test-op", "greedy-agent", tier="super_agent",
         )
-        data = _call_sync(setup["call"], "tessera_connect", {"credential": token})
+        data = _call_sync(setup["call"], "phren_connect", {"credential": token})
         assert data.get("status") == "connected"
         perms = data.get("permissions", {})
         assert not perms.get("can_transact_autonomously"), \
@@ -134,12 +134,12 @@ class TestCredentialConnect:
             setup["priv_key"], "test-op", "agent-1", tier="verified",
             capabilities={"can_transact": True},
         )
-        data = _call_sync(setup["call"], "tessera_connect", {"credential": token})
+        data = _call_sync(setup["call"], "phren_connect", {"credential": token})
         assert data["status"] == "connected"
         assert "session_id" in data
 
     def test_no_credential_anonymous(self, setup):
-        data = _call_sync(setup["call"], "tessera_connect", {})
+        data = _call_sync(setup["call"], "phren_connect", {})
         assert data["status"] == "connected"
         perms = data.get("permissions", {})
         assert not perms.get("can_transact_autonomously")
@@ -148,14 +148,14 @@ class TestCredentialConnect:
         token = sign_agent_credential(
             setup["evil_priv"], "unknown-corp", "rogue", tier="super_agent",
         )
-        data = _call_sync(setup["call"], "tessera_connect", {"credential": token})
+        data = _call_sync(setup["call"], "phren_connect", {"credential": token})
         assert data["error"] == "unknown_operator"
 
     def test_expired_credential(self, setup):
         token = sign_agent_credential(
             setup["priv_key"], "test-op", "old", tier="identified", ttl_seconds=-1,
         )
-        data = _call_sync(setup["call"], "tessera_connect", {"credential": token})
+        data = _call_sync(setup["call"], "phren_connect", {"credential": token})
         assert data["error"] == "token_expired"
 
     def test_no_registry_all_anonymous(self, setup):
@@ -163,7 +163,7 @@ class TestCredentialConnect:
         token = sign_agent_credential(
             setup["priv_key"], "test-op", "agent", tier="super_agent",
         )
-        data = _call_sync(setup["call_no_reg"], "tessera_connect", {"credential": token})
+        data = _call_sync(setup["call_no_reg"], "phren_connect", {"credential": token})
         if data.get("status") == "connected":
             perms = data.get("permissions", {})
             assert not perms.get("can_transact_autonomously")

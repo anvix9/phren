@@ -1,5 +1,5 @@
 """
-Tessera Phase 4 — Contract Standard Tests
+Phren Phase 4 — Contract Standard Tests
 
 Validates:
   1. JSON Schema is generated correctly from Pydantic models
@@ -12,8 +12,8 @@ import pytest
 import json
 from pathlib import Path
 
-from tessera.contract.schema import TesseraContract, RateLimit
-from tessera.contract.validation import validate_contract
+from phren.contract.schema import PhrenContract, RateLimit
+from phren.contract.validation import validate_contract
 
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -66,7 +66,7 @@ class TestJsonSchema:
         schema_path = PROJECT_ROOT / "docs" / "contract-schema.json"
         with open(schema_path) as f:
             on_disk = json.load(f)
-        from_model = TesseraContract.model_json_schema()
+        from_model = PhrenContract.model_json_schema()
         # Property count should match
         assert set(on_disk["properties"].keys()) == set(from_model["properties"].keys())
 
@@ -76,7 +76,7 @@ class TestJsonSchema:
 # ═══════════════════════════════════════════════
 
 class TestReferenceContracts:
-    """Validate all simulation contracts load as valid TesseraContract objects."""
+    """Validate all simulation contracts load as valid PhrenContract objects."""
 
     @staticmethod
     def _find_contracts():
@@ -93,11 +93,11 @@ class TestReferenceContracts:
 
     @pytest.mark.parametrize("contract_path", _find_contracts.__func__(), ids=lambda p: p.parent.name)
     def test_contract_loads(self, contract_path):
-        """Every simulation contract must load as a valid TesseraContract."""
+        """Every simulation contract must load as a valid PhrenContract."""
         with open(contract_path) as f:
             data = json.load(f)
         # Should not raise
-        contract = TesseraContract(**data)
+        contract = PhrenContract(**data)
         assert contract.contract_id or contract.site_name
 
     @pytest.mark.parametrize("contract_path", _find_contracts.__func__(), ids=lambda p: p.parent.name)
@@ -105,7 +105,7 @@ class TestReferenceContracts:
         """Every contract must have site_name and site_url."""
         with open(contract_path) as f:
             data = json.load(f)
-        contract = TesseraContract(**data)
+        contract = PhrenContract(**data)
         assert contract.site_name, f"{contract_path.name}: missing site_name"
         assert contract.site_url, f"{contract_path.name}: missing site_url"
 
@@ -118,7 +118,7 @@ class TestContractValidation:
     """Verify the validation catches dangerous omissions."""
 
     def test_valid_contract_passes(self):
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="valid-001",
             site_name="Valid Site",
             site_url="http://localhost",
@@ -131,7 +131,7 @@ class TestContractValidation:
         assert len(errors) == 0
 
     def test_missing_identity_fails(self):
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="",
             site_name="",
             site_url="",
@@ -140,7 +140,7 @@ class TestContractValidation:
         assert len(errors) >= 1
 
     def test_no_rate_limits_warns(self):
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="no-limits",
             site_name="No Limits",
             site_url="http://localhost",
@@ -150,7 +150,7 @@ class TestContractValidation:
 
     def test_roundtrip_json_schema(self):
         """Contract → JSON → reload → same contract."""
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="roundtrip-001",
             site_name="Roundtrip Test",
             site_url="http://localhost",
@@ -160,7 +160,7 @@ class TestContractValidation:
             ),
         )
         json_str = contract.model_dump_json()
-        reloaded = TesseraContract.model_validate_json(json_str)
+        reloaded = PhrenContract.model_validate_json(json_str)
         assert reloaded.contract_id == contract.contract_id
         assert reloaded.rate_limits.max_transaction_amount == 200.0
 
@@ -183,7 +183,7 @@ class TestSpecExamples:
                 "max_transaction_amount": 100.00,
             },
         }
-        contract = TesseraContract(**minimal)
+        contract = PhrenContract(**minimal)
         errors, _ = validate_contract(contract)
         assert len(errors) == 0
 
@@ -236,7 +236,7 @@ class TestSpecExamples:
                 "retention": "session",
             },
         }
-        contract = TesseraContract(**full)
+        contract = PhrenContract(**full)
         errors, _ = validate_contract(contract)
         assert len(errors) == 0
         assert len(contract.screens) == 1

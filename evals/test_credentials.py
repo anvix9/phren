@@ -1,5 +1,5 @@
 """
-Tessera Phase 1 — Credential Tests
+Phren Phase 1 — Credential Tests
 
 These tests verify the trust model:
   - Valid credentials are accepted with correct tier
@@ -15,14 +15,14 @@ import os
 import time
 from pathlib import Path
 
-from tessera.contract.schema import TesseraContract
+from phren.contract.schema import PhrenContract
 
-from tessera.contract.operator_registry import (
+from phren.contract.operator_registry import (
     OperatorRegistry,
     OperatorTier,
     generate_operator_keypair,
 )
-from tessera.contract.credentials import (
+from phren.contract.credentials import (
     sign_agent_credential,
     verify_agent_credential,
     VerifiedCredential,
@@ -322,15 +322,15 @@ class TestContractValidation:
     """Verify contract validation catches dangerous omissions."""
 
     def test_missing_spend_limit_is_error(self):
-        from tessera.contract.validation import validate_contract
-        contract = TesseraContract(
+        from phren.contract.validation import validate_contract
+        contract = PhrenContract(
             contract_id="no-limits",
             site_name="Dangerous",
             site_url="http://localhost",
             screens=[],
         )
         # Add a POST action to trigger the transactable check
-        from tessera.contract.schema import ScreenDefinition, ActionDefinition
+        from phren.contract.schema import ScreenDefinition, ActionDefinition
         contract.screens = [ScreenDefinition(
             id="main", name="Main", description="test",
             actions=[ActionDefinition(
@@ -342,9 +342,9 @@ class TestContractValidation:
         assert any("max_transaction_amount" in e for e in errors)
 
     def test_valid_contract_passes(self):
-        from tessera.contract.validation import validate_contract
-        from tessera.contract.schema import RateLimit
-        contract = TesseraContract(
+        from phren.contract.validation import validate_contract
+        from phren.contract.schema import RateLimit
+        contract = PhrenContract(
             contract_id="valid",
             site_name="Valid",
             site_url="http://localhost",

@@ -1,7 +1,7 @@
 {
   "$defs": {
     "ActionDefinition": {
-      "description": "A single action available in the Tessera terminal.\nMaps to one thing the agent can do.",
+      "description": "A single action available in the Phren terminal.\nMaps to one thing the agent can do.",
       "properties": {
         "id": {
           "title": "Id",
@@ -421,7 +421,7 @@
       "type": "object"
     },
     "ScreenDefinition": {
-      "description": "A single screen in the Tessera terminal.\nRepresents one \"state\" of the website from the agent's perspective.",
+      "description": "A single screen in the Phren terminal.\nRepresents one \"state\" of the website from the agent's perspective.",
       "properties": {
         "id": {
           "title": "Id",
@@ -493,7 +493,7 @@
       "type": "object"
     }
   },
-  "description": "The complete contract for a Tessera terminal.\n\nThis is presented to agents before any interaction.\nThe agent must accept the contract to proceed.\nAll interactions are logged against the accepted contract.",
+  "description": "The complete contract for a Phren terminal.\n\nThis is presented to agents before any interaction.\nThe agent must accept the contract to proceed.\nAll interactions are logged against the accepted contract.",
   "properties": {
     "contract_id": {
       "title": "Contract Id",
@@ -629,6 +629,6 @@
     "site_name",
     "site_url"
   ],
-  "title": "TesseraContract",
+  "title": "PhrenContract",
   "type": "object"
 }

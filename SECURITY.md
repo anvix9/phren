@@ -2,15 +2,15 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in Tessera, please report it responsibly:
+If you discover a security vulnerability in Phren, please report it responsibly:
 
-- Email: security@tessera.dev (or open a private GitHub security advisory)
+- Email: security@phren.dev (or open a private GitHub security advisory)
 - Do not open a public issue for security vulnerabilities
 - We will acknowledge receipt within 48 hours
 
 ## Scope
 
-Tessera is a governance layer between AI agents and websites. Security issues in the following areas are in scope:
+Phren is a governance layer between AI agents and websites. Security issues in the following areas are in scope:
 
 - Trust tier escalation (agent gaining permissions it shouldn't have)
 - Contract enforcement bypass (agent exceeding rate limits, spending caps, or action restrictions)
@@ -31,7 +31,7 @@ Tessera is a governance layer between AI agents and websites. Security issues in
 
 **Issue:** Contract fields like `max_transaction_amount`, `max_daily_spend`, `requests_per_hour` were declared but never checked at runtime.
 
-**Fix:** All fields are now enforced via `tessera/contract/enforcement.py`. Every field has a unit test and an integration test proving it binds.
+**Fix:** All fields are now enforced via `phren/contract/enforcement.py`. Every field has a unit test and an integration test proving it binds.
 
 ### Operator-Declared Money Limits (FIXED — Audit)
 
@@ -51,7 +51,7 @@ Tessera is a governance layer between AI agents and websites. Security issues in
 
 ## Contract Validation
 
-`tessera/contract/validation.py` catches dangerous omissions before a contract goes live:
+`phren/contract/validation.py` catches dangerous omissions before a contract goes live:
 
 | Check | Severity | Description |
 |-------|----------|-------------|
@@ -69,7 +69,7 @@ Tessera is a governance layer between AI agents and websites. Security issues in
 
 ## OWASP LLM Top 10 Mapping
 
-| OWASP ID | Risk | Tessera Status |
+| OWASP ID | Risk | Phren Status |
 |----------|------|----------------|
 | LLM01 | Prompt Injection | Terminal actions pass through to real APIs — parameter validation is contract-bound |
 | LLM06 | Excessive Agency | Fixed. Trust tier self-declaration removed; credential-based, regression-tested |

@@ -1,5 +1,5 @@
 """
-Tessera Phase 2 — Governance Enforcement Tests
+Phren Phase 2 — Governance Enforcement Tests
 
 Each test proves a specific contract field actually binds at runtime.
 The build plan says: "an enforcement test suite per field, each asserting
@@ -8,11 +8,11 @@ the limit actually binds."
 import pytest
 from datetime import datetime, timezone, timedelta
 
-from tessera.contract.schema import (
-    TesseraContract, RateLimit, DataTerms, AgentProfile,
+from phren.contract.schema import (
+    PhrenContract, RateLimit, DataTerms, AgentProfile,
     AgentTrust, AgentCapabilities, ResolvedPermissions, AuditLogEntry,
 )
-from tessera.contract.enforcement import (
+from phren.contract.enforcement import (
     check_contract_expiration,
     check_max_sessions,
     check_rate_limits,
@@ -25,7 +25,7 @@ from tessera.contract.enforcement import (
 )
 
 
-def _make_contract(**overrides) -> TesseraContract:
+def _make_contract(**overrides) -> PhrenContract:
     """Helper: create a contract with custom fields."""
     defaults = {
         "contract_id": "test-enforce",
@@ -34,7 +34,7 @@ def _make_contract(**overrides) -> TesseraContract:
         "require_identification": False,
     }
     defaults.update(overrides)
-    return TesseraContract(**defaults)
+    return PhrenContract(**defaults)
 
 
 def _make_log_entries(count: int, seconds_ago: int = 30) -> list[AuditLogEntry]:
@@ -391,7 +391,7 @@ class TestContractCeilsOperatorClaims:
 
     def test_transaction_amount_capped_by_contract(self):
         """Operator claims 999999, contract says 100 → 100 wins."""
-        from tessera.contract.resolver import resolve_permissions
+        from phren.contract.resolver import resolve_permissions
 
         contract = _make_contract(
             rate_limits=RateLimit(max_transaction_amount=100.0),
@@ -412,7 +412,7 @@ class TestContractCeilsOperatorClaims:
 
     def test_transaction_amount_operator_lower_wins(self):
         """Operator claims 50, contract says 100 → 50 wins (operator is stricter)."""
-        from tessera.contract.resolver import resolve_permissions
+        from phren.contract.resolver import resolve_permissions
 
         contract = _make_contract(
             rate_limits=RateLimit(max_transaction_amount=100.0),
@@ -430,7 +430,7 @@ class TestContractCeilsOperatorClaims:
 
     def test_contract_only_limit_used_when_operator_has_none(self):
         """Operator sets no limit, contract says 200 → 200."""
-        from tessera.contract.resolver import resolve_permissions
+        from phren.contract.resolver import resolve_permissions
 
         contract = _make_contract(
             rate_limits=RateLimit(max_transaction_amount=200.0),
@@ -460,7 +460,7 @@ class TestContractCeilsOperatorClaims:
             ),
         )
         # check_daily_spend should use 500, not 99999
-        from tessera.contract.enforcement import check_daily_spend
+        from phren.contract.enforcement import check_daily_spend
         ok, reason = check_daily_spend(agent, 500.0, [], 600.0)
         assert ok is False, (
             f"BLOCKER: operator claimed daily_spend=99999 but contract says 500. "
@@ -470,7 +470,7 @@ class TestContractCeilsOperatorClaims:
 
     def test_daily_spend_operator_lower_wins(self):
         """Operator claims 200, contract says 500 → 200 wins."""
-        from tessera.contract.enforcement import check_daily_spend
+        from phren.contract.enforcement import check_daily_spend
         agent = AgentProfile(
             provider="test", agent_name="modest",
             trust_level=AgentTrust.VERIFIED,

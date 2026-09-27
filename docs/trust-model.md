@@ -1,8 +1,8 @@
-# Tessera Trust Model
+# Phren Trust Model
 
 ## Overview
 
-The trust model is how Tessera decides what an agent is allowed to do. Instead of agents self-declaring their permissions (the vulnerability in v0.1), trust is **derived from cryptographically verified credentials**.
+The trust model is how Phren decides what an agent is allowed to do. Instead of agents self-declaring their permissions (the vulnerability in v0.1), trust is **derived from cryptographically verified credentials**.
 
 ## How It Works
 
@@ -30,7 +30,7 @@ No step in this flow allows the agent to choose its own trust level.
 
 ## Components
 
-### 1. Operator Registry (`tessera/contract/operator_registry.py`)
+### 1. Operator Registry (`phren/contract/operator_registry.py`)
 
 Stores known agent operators with their public keys and trust tier ceilings.
 
@@ -57,7 +57,7 @@ Stores known agent operators with their public keys and trust tier ceilings.
 }
 ```
 
-### 2. Agent Credential (`tessera/contract/credentials.py`)
+### 2. Agent Credential (`phren/contract/credentials.py`)
 
 A signed JWT that an agent presents when connecting to a terminal.
 
@@ -91,7 +91,7 @@ A signed JWT that an agent presents when connecting to a terminal.
 
 **Signing:** The operator signs the token with their Ed25519 private key. The terminal verifies with the registered public key. No shared secrets.
 
-### 3. Credential Verifier (`tessera/contract/credentials.py`)
+### 3. Credential Verifier (`phren/contract/credentials.py`)
 
 Verifies a credential and returns the derived trust tier.
 
@@ -150,7 +150,7 @@ This trust model is deliberately simple and self-contained. The build plan (Phas
 - **OAuth 2.1 / DCR / OIDC Federation**: Standard auth flows
 - **Visa Trusted Agent Protocol**: Payment-specific trust
 
-These are adapter paths in `/interop/`, not replacements. Tessera owns the policy layer *above* whatever identity standard wins.
+These are adapter paths in `/interop/`, not replacements. Phren owns the policy layer *above* whatever identity standard wins.
 
 ## MCP Server (Phase 3)
 
@@ -160,8 +160,8 @@ The trust model is enforced through a spec-compliant MCP server using the offici
 
 | Transport | Use case | How to run |
 |-----------|----------|------------|
-| **Streamable HTTP** | Web-accessible terminal | `tessera serve --transport http --port 8001` |
-| **stdio** | Claude Desktop, local MCP clients | `tessera serve --transport stdio` |
+| **Streamable HTTP** | Web-accessible terminal | `phren serve --transport http --port 8001` |
+| **stdio** | Claude Desktop, local MCP clients | `phren serve --transport stdio` |
 
 ### Protocol
 
@@ -169,19 +169,19 @@ The server implements JSON-RPC 2.0 over MCP with 5 tools:
 
 | Tool | Description | Auth required |
 |------|-------------|---------------|
-| `tessera_connect` | Start a session with a signed credential | No (anonymous allowed) |
-| `tessera_get_screen` | View current screen + available actions | Session |
-| `tessera_execute` | Execute an action on the current screen | Session + trust tier |
-| `tessera_audit_log` | View the full session audit log | Session |
-| `tessera_disconnect` | End the session | Session |
+| `phren_connect` | Start a session with a signed credential | No (anonymous allowed) |
+| `phren_get_screen` | View current screen + available actions | Session |
+| `phren_execute` | Execute an action on the current screen | Session + trust tier |
+| `phren_audit_log` | View the full session audit log | Session |
+| `phren_disconnect` | End the session | Session |
 
 ### Credential Flow Through MCP
 
 ```
-MCP Client                    Tessera MCP Server
+MCP Client                    Phren MCP Server
     │                              │
     │ tools/call                   │
-    │ { tessera_connect,           │
+    │ { phren_connect,           │
     │   credential: "eyJ..." }     │
     │ ──────────────────────────>  │
     │                              │ 1. Decode JWT → get operator_id

@@ -1,10 +1,10 @@
-# Tessera — Discovery Benchmarks
+# Phren — Discovery Benchmarks
 
 ## Overview
 
-Tessera compiles any website into a structured terminal interface for AI agents.
+Phren compiles any website into a structured terminal interface for AI agents.
 The compiler's job: discover every API endpoint a site exposes, then generate
-a Tessera contract from them.
+a Phren contract from them.
 
 We built 4 discovery tools and tested them against 13 real GitHub repos
 and 18 simulation sites.

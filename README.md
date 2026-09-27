@@ -1,6 +1,6 @@
-# Tessera — Governed Terminals for AI Agents
+# Phren — Governed Terminals for AI Agents
 
-Tessera compiles any website into a **terminal** — a governed, navigable layer between AI agents and web APIs. Agents navigate terminals via MCP to complete tasks like purchasing, booking, or requesting documents.
+Phren compiles any website into a **terminal** — a governed, navigable layer between AI agents and web APIs. Agents navigate terminals via MCP to complete tasks like purchasing, booking, or requesting documents.
 
 ## Why not just give agents the API?
 
@@ -26,7 +26,7 @@ MCP is the WIRE.  The API is the DESTINATION.
 The terminal is the RULES + MAP + MEMORY in between.
 ```
 
-| | Raw API | MCP Tools | Browser Agent | **Tessera Terminal** |
+| | Raw API | MCP Tools | Browser Agent | **Phren Terminal** |
 |---|---|---|---|---|
 | **Governance** | None | None | None | Trust tiers, spend limits, rate limits |
 | **Flow guidance** | None | None | None | Roles, hints, path trace |
@@ -115,7 +115,7 @@ FastAPI, Rails, Go (Chi/Echo), NestJS, Next.js (files/App Router/pages), tRPC, P
 
 ## Positioning
 
-**Stripe ACP / Google UCP** handle the payment rail. **Tessera** handles what the agent is *permitted* to do, proves what it *did*, and guides it through the *flow*. They are complementary.
+**Stripe ACP / Google UCP** handle the payment rail. **Phren** handles what the agent is *permitted* to do, proves what it *did*, and guides it through the *flow*. They are complementary.
 
 ## Known limitations
 

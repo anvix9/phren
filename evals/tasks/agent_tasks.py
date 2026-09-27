@@ -1,5 +1,5 @@
 """
-Tessera Phase 5b — Agent Task Definitions
+Phren Phase 5b — Agent Task Definitions
 
 Each task defines:
   - id: unique identifier

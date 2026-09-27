@@ -3,14 +3,14 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tessera"
+name = "phren"
 version = "0.2.0"
 description = "Agent Terminal for the Web — compiles websites into governed MCP terminals"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
 authors = [
-    { name = "Tessera Contributors" },
+    { name = "Phren Contributors" },
 ]
 keywords = ["mcp", "ai-agents", "web", "terminal", "governance"]
 classifiers = [
@@ -41,21 +41,21 @@ dev = [
     "pytest-cov>=4.0",
     "httpx>=0.24",
 ]
-all = ["tessera[server,dev]"]
+all = ["phren[server,dev]"]
 
 [project.urls]
-Repository = "https://github.com/tessera-agent/tessera"
-Documentation = "https://github.com/tessera-agent/tessera#readme"
+Repository = "https://github.com/phren-agent/phren"
+Documentation = "https://github.com/phren-agent/phren#readme"
 
 [project.scripts]
-tessera = "tessera.cli.main:cli"
+phren = "phren.cli.main:cli"
 
 [tool.setuptools.packages.find]
-include = ["tessera*"]
+include = ["phren*"]
 
 [tool.pytest.ini_options]
 testpaths = ["evals", "conformance", "tests"]
 python_files = ["test_*.py"]
 
 [tool.setuptools.package-data]
-tessera = ["py.typed"]
+phren = ["py.typed"]

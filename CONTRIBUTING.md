@@ -1,12 +1,12 @@
-# Contributing to Tessera
+# Contributing to Phren
 
-Thank you for your interest in contributing to Tessera.
+Thank you for your interest in contributing to Phren.
 
 ## Development Setup
 
 ```bash
-git clone https://github.com/tessera-agent/tessera.git
-cd tessera
+git clone https://github.com/phren-agent/phren.git
+cd phren
 pip install -e ".[dev]"
 pytest
 ```
@@ -14,7 +14,7 @@ pytest
 ## Project Structure
 
 ```
-tessera/              # Python package (Apache-2.0)
+phren/              # Python package (Apache-2.0)
 ├── compiler/         # Route discovery tools
 ├── contract/         # Schema + permission resolver
 ├── terminal/         # Engine, agents, registry
@@ -37,12 +37,12 @@ pytest evals/ -v
 
 ## Boundary Rule
 
-Tessera is open-core. The boundary is structural:
+Phren is open-core. The boundary is structural:
 
-- **`tessera/`** is Apache-2.0, fully functional standalone. It never imports from any commercial layer.
-- Commercial features (registry, analytics, audit) live in a separate repository and consume `tessera` as a dependency — never the inverse.
+- **`phren/`** is Apache-2.0, fully functional standalone. It never imports from any commercial layer.
+- Commercial features (registry, analytics, audit) live in a separate repository and consume `phren` as a dependency — never the inverse.
 
-If your contribution adds a dependency on anything outside `tessera/`, it belongs in the commercial repo, not here.
+If your contribution adds a dependency on anything outside `phren/`, it belongs in the commercial repo, not here.
 
 ## Submitting Changes
 

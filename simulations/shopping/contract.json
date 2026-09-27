@@ -1,7 +1,7 @@
 {
-  "contract_id": "tessera_shop_v2",
+  "contract_id": "phren_shop_v2",
   "version": "0.2.0",
-  "site_name": "Tessera Shop Demo",
+  "site_name": "Phren Shop Demo",
   "site_url": "http://localhost:8000",
   "description": "E-commerce demo with governed agent access. Actions have roles (primary/secondary/navigation) and screens have flow hints. Test accounts: alice@example.com/password123",
   "tier": "standard",

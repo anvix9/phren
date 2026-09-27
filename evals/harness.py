@@ -1,5 +1,5 @@
 """
-Tessera Phase 5 — Eval Harness
+Phren Phase 5 — Eval Harness
 
 Runs tasks against the terminal engine and measures:
   1. Governance correctness: did the terminal deny what it should deny?
@@ -33,10 +33,10 @@ from dataclasses import dataclass, field
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 
-from tessera.contract.schema import (
-    TesseraContract, AgentProfile, AgentTrust, AgentCapabilities, RateLimit,
+from phren.contract.schema import (
+    PhrenContract, AgentProfile, AgentTrust, AgentCapabilities, RateLimit,
 )
-from tessera.terminal.engine import TesseraTerminal
+from phren.terminal.engine import PhrenTerminal
 
 
 # ── Task Definition ──
@@ -95,7 +95,7 @@ class TaskResult:
 
 class EvalRunner:
     """
-    Runs tasks against a Tessera terminal and collects results.
+    Runs tasks against a Phren terminal and collects results.
 
     Usage:
         runner = EvalRunner()
@@ -125,8 +125,8 @@ class EvalRunner:
             "require_identification": False,
             **task.contract_overrides,
         }
-        contract = TesseraContract(**contract_data)
-        terminal = TesseraTerminal(contract, "http://localhost:9999")
+        contract = PhrenContract(**contract_data)
+        terminal = PhrenTerminal(contract, "http://localhost:9999")
 
         # Build agent
         agent_config = {
@@ -249,7 +249,7 @@ class EvalRunner:
         failed = total - passed
 
         print(f"\n{'='*65}")
-        print(f"  TESSERA EVAL REPORT")
+        print(f"  PHREN EVAL REPORT")
         print(f"{'='*65}")
         print(f"  Total: {total}  Passed: {passed}  Failed: {failed}")
         print(f"  Pass rate: {passed/total*100:.0f}%" if total > 0 else "  No tasks")

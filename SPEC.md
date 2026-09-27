@@ -1,4 +1,4 @@
-# Tessera Contract Specification
+# Phren Contract Specification
 
 **Version:** 0.2.0
 **Status:** Draft
@@ -6,15 +6,15 @@
 
 ## Overview
 
-A Tessera Contract defines what an AI agent is permitted to do on a website, and under what constraints. It is a machine-readable JSON document that the terminal enforces at runtime.
+A Phren Contract defines what an AI agent is permitted to do on a website, and under what constraints. It is a machine-readable JSON document that the terminal enforces at runtime.
 
 The contract is authored by the website owner. It describes the site's screens (what the agent can see), actions (what the agent can do), trust tiers (who can do what), and limits (rate limits, spending caps, session constraints).
 
 ## Positioning
 
-> Stripe ACP and Google/Shopify UCP define how an agent transacts. Tessera defines what an agent is permitted to do on your site, and proves what it did.
+> Stripe ACP and Google/Shopify UCP define how an agent transacts. Phren defines what an agent is permitted to do on your site, and proves what it did.
 
-Tessera contracts are complementary to transaction protocols, not competitive. A contract governs the *scope* of permitted behavior; ACP/UCP handle the payment rail.
+Phren contracts are complementary to transaction protocols, not competitive. A contract governs the *scope* of permitted behavior; ACP/UCP handle the payment rail.
 
 ## Contract Structure
 
@@ -287,10 +287,10 @@ When a field is deprecated:
 Validate a contract against the schema:
 
 ```python
-from tessera.contract.schema import TesseraContract
-from tessera.contract.validation import validate_contract
+from phren.contract.schema import PhrenContract
+from phren.contract.validation import validate_contract
 
-contract = TesseraContract(**contract_data)
+contract = PhrenContract(**contract_data)
 errors, warnings = validate_contract(contract)
 if errors:
     raise ValueError(f"Invalid contract: {errors}")

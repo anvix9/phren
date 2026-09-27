@@ -1,7 +1,7 @@
 {
-  "contract_id": "tessera_library_v2",
+  "contract_id": "phren_library_v2",
   "version": "0.2.0",
-  "site_name": "Tessera Library Demo",
+  "site_name": "Phren Library Demo",
   "site_url": "http://localhost:8004",
   "description": "Government document library and service portal with authentication. Document browsing is public. Submitting requests requires login. Test accounts: alice@example.com/password123, bob@example.com/securepass",
   "tier": "standard",

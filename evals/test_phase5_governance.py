@@ -1,5 +1,5 @@
 """
-Tessera Phase 5 — Governance Eval Suite (pytest)
+Phren Phase 5 — Governance Eval Suite (pytest)
 
 Runs all governance boundary tasks through the eval harness.
 Each task is a separate pytest test with a clear pass/fail.

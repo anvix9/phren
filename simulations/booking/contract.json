@@ -1,7 +1,7 @@
 {
-  "contract_id": "tessera_booking_v2",
+  "contract_id": "phren_booking_v2",
   "version": "0.2.0",
-  "site_name": "Tessera Booking Demo",
+  "site_name": "Phren Booking Demo",
   "site_url": "http://localhost:8002",
   "description": "Hotel booking service with authentication. Agents must login or register before making reservations. Hotel and room browsing is public. Test accounts: alice@example.com/password123, bob@example.com/securepass",
   "tier": "standard",

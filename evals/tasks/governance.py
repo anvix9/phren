@@ -1,5 +1,5 @@
 """
-Tessera Phase 5 — Governance Boundary Tasks
+Phren Phase 5 — Governance Boundary Tasks
 
 These tasks test the governance boundary, not agent intelligence.
 Each task scripts a sequence that should be denied or allowed based on
@@ -14,7 +14,7 @@ Categories:
   - item_limits: max items per action enforced
   - user_consent: actions requiring delegation
 """
-from tessera.contract.schema import RateLimit, ScreenDefinition, ActionDefinition, ActionParameter
+from phren.contract.schema import RateLimit, ScreenDefinition, ActionDefinition, ActionParameter
 from evals.harness import TaskDefinition, TaskStep
 
 

@@ -1,5 +1,5 @@
 """
-Tessera — Test Suite
+Phren — Test Suite
 
 Tests the core components independently without requiring running servers.
 Uses pytest with proper assertions — failures exit non-zero.
@@ -15,12 +15,12 @@ class TestContractSchema:
     """Test that the contract schema validates correctly."""
 
     def test_import(self):
-        from tessera.contract.schema import TesseraContract
-        assert TesseraContract is not None
+        from phren.contract.schema import PhrenContract
+        assert PhrenContract is not None
 
     def test_create_minimal_contract(self):
-        from tessera.contract.schema import TesseraContract
-        contract = TesseraContract(
+        from phren.contract.schema import PhrenContract
+        contract = PhrenContract(
             contract_id="test-contract-001",
             site_name="Test Site",
             site_url="http://localhost:8000",
@@ -29,8 +29,8 @@ class TestContractSchema:
         assert contract.version == "0.1.0"
 
     def test_contract_with_screens(self):
-        from tessera.contract.schema import (
-            TesseraContract, ScreenDefinition, ActionDefinition,
+        from phren.contract.schema import (
+            PhrenContract, ScreenDefinition, ActionDefinition,
             ActionParameter, DataField,
         )
         search_action = ActionDefinition(
@@ -52,7 +52,7 @@ class TestContractSchema:
             ],
             actions=[search_action],
         )
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="shop-001",
             site_name="Shop",
             site_url="http://localhost:8000",
@@ -62,7 +62,7 @@ class TestContractSchema:
         assert contract.screens[0].actions[0].id == "search"
 
     def test_agent_trust_enum(self):
-        from tessera.contract.schema import AgentTrust
+        from phren.contract.schema import AgentTrust
         assert AgentTrust.ANONYMOUS == "anonymous"
         assert AgentTrust.IDENTIFIED == "identified"
         assert AgentTrust.VERIFIED == "verified"
@@ -75,16 +75,16 @@ class TestResolver:
     """Test permission resolution logic."""
 
     def test_import(self):
-        from tessera.contract.resolver import resolve_permissions
+        from phren.contract.resolver import resolve_permissions
         assert resolve_permissions is not None
 
     def test_resolve_with_minimal_contract(self):
-        from tessera.contract.schema import (
-            TesseraContract, AgentProfile, AgentTrust, AgentCapabilities,
+        from phren.contract.schema import (
+            PhrenContract, AgentProfile, AgentTrust, AgentCapabilities,
         )
-        from tessera.contract.resolver import resolve_permissions
+        from phren.contract.resolver import resolve_permissions
 
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="test-001",
             site_name="Test",
             site_url="http://localhost",
@@ -108,12 +108,12 @@ class TestSourceParser:
     """Test route extraction from source code."""
 
     def test_import(self):
-        from tessera.compiler.source_parser import SourceRouteParser
+        from phren.compiler.source_parser import SourceRouteParser
         assert SourceRouteParser is not None
 
     def test_parse_fastapi_simulation(self):
         """Parse routes from a known simulation — conduit has 19 endpoints."""
-        from tessera.compiler.source_parser import SourceRouteParser
+        from phren.compiler.source_parser import SourceRouteParser
 
         sim_path = Path(__file__).parent.parent / "simulations" / "conduit" / "api"
         if not sim_path.exists():
@@ -134,7 +134,7 @@ class TestSourceParser:
 
     def test_parse_returns_method_and_path(self):
         """Every parsed route must have method and path."""
-        from tessera.compiler.source_parser import SourceRouteParser
+        from phren.compiler.source_parser import SourceRouteParser
 
         sim_path = Path(__file__).parent.parent / "simulations" / "conduit" / "api"
         if not sim_path.exists():
@@ -151,7 +151,7 @@ class TestSourceParser:
 
     def test_zero_false_positives_on_conduit(self):
         """Source parser should have 100% precision — no false positives."""
-        from tessera.compiler.source_parser import SourceRouteParser
+        from phren.compiler.source_parser import SourceRouteParser
 
         sim_path = Path(__file__).parent.parent / "simulations" / "conduit" / "api"
         if not sim_path.exists():
@@ -174,16 +174,16 @@ class TestAutoDiscovery:
     """Test blind auto-discovery (unit-level, no server needed)."""
 
     def test_import(self):
-        from tessera.compiler.api_autodiscovery import APIAutoDiscovery
+        from phren.compiler.api_autodiscovery import APIAutoDiscovery
         assert APIAutoDiscovery is not None
 
     def test_common_resources_not_empty(self):
-        from tessera.compiler.api_autodiscovery import APIAutoDiscovery
+        from phren.compiler.api_autodiscovery import APIAutoDiscovery
         assert len(APIAutoDiscovery.COMMON_RESOURCES) > 50, \
             "Resource vocabulary should have 50+ entries"
 
     def test_common_api_prefixes(self):
-        from tessera.compiler.api_autodiscovery import APIAutoDiscovery
+        from phren.compiler.api_autodiscovery import APIAutoDiscovery
         prefixes = APIAutoDiscovery.COMMON_API_PREFIXES
         assert "/api" in prefixes
         assert "/api/v1" in prefixes
@@ -195,11 +195,11 @@ class TestOwnerDiscovery:
     """Test owner-assisted discovery (unit-level)."""
 
     def test_import(self):
-        from tessera.compiler.owner_discovery import OwnerDiscovery
+        from phren.compiler.owner_discovery import OwnerDiscovery
         assert OwnerDiscovery is not None
 
     def test_init(self):
-        from tessera.compiler.owner_discovery import OwnerDiscovery
+        from phren.compiler.owner_discovery import OwnerDiscovery
         d = OwnerDiscovery(
             base_url="http://localhost:8000",
             api_prefix="/api/v1",
@@ -217,13 +217,13 @@ class TestPackageHygiene:
     """Ensure the package is properly structured."""
 
     def test_version_exists(self):
-        import tessera
-        assert hasattr(tessera, "__version__")
-        assert tessera.__version__ == "0.2.0"
+        import phren
+        assert hasattr(phren, "__version__")
+        assert phren.__version__ == "0.2.0"
 
     def test_no_sys_path_hacks(self):
         """No sys.path.insert in any core package file."""
-        package_root = Path(__file__).parent.parent / "tessera"
+        package_root = Path(__file__).parent.parent / "phren"
         for py_file in package_root.rglob("*.py"):
             content = py_file.read_text()
             assert "sys.path.insert" not in content, \

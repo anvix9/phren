@@ -1,5 +1,5 @@
 """
-Tessera Phase 2 — Governance Integration Tests
+Phren Phase 2 — Governance Integration Tests
 
 Unit tests (test_enforcement.py) prove each check function works.
 These integration tests prove the checks are actually wired into the
@@ -13,16 +13,16 @@ import json
 import asyncio
 from datetime import datetime, timezone, timedelta
 
-from tessera.contract.schema import (
-    TesseraContract, ScreenDefinition, ActionDefinition,
+from phren.contract.schema import (
+    PhrenContract, ScreenDefinition, ActionDefinition,
     ActionParameter, RateLimit, AgentProfile, AgentTrust,
     AgentCapabilities,
 )
-from tessera.contract.resolver import resolve_permissions
-from tessera.terminal.engine import TesseraTerminal
+from phren.contract.resolver import resolve_permissions
+from phren.terminal.engine import PhrenTerminal
 
 
-def _make_terminal(contract_overrides: dict) -> TesseraTerminal:
+def _make_terminal(contract_overrides: dict) -> PhrenTerminal:
     """Create a terminal with a contract that has one screen and one action."""
     defaults = {
         "contract_id": "enforce-integ",
@@ -47,11 +47,11 @@ def _make_terminal(contract_overrides: dict) -> TesseraTerminal:
         "entry_screen": "main",
     }
     defaults.update(contract_overrides)
-    contract = TesseraContract(**defaults)
-    return TesseraTerminal(contract, "http://localhost:9999")
+    contract = PhrenContract(**defaults)
+    return PhrenTerminal(contract, "http://localhost:9999")
 
 
-def _connect(terminal: TesseraTerminal, **agent_overrides) -> str:
+def _connect(terminal: PhrenTerminal, **agent_overrides) -> str:
     """Connect an agent and return session_id."""
     defaults = {
         "provider": "test",

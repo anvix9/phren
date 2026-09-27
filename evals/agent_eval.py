@@ -1,5 +1,5 @@
 """
-Tessera Phase 5b — LLM Agent Eval Runner
+Phren Phase 5b — LLM Agent Eval Runner
 
 Runs actual LLM agents against simulation servers through the terminal.
 Measures pass@1, steps-to-completion, invalid-action rate, and cost.
@@ -35,10 +35,10 @@ from typing import Optional, Callable
 from pathlib import Path
 from datetime import datetime, timezone
 
-from tessera.contract.schema import (
-    TesseraContract, AgentProfile, AgentTrust, AgentCapabilities,
+from phren.contract.schema import (
+    PhrenContract, AgentProfile, AgentTrust, AgentCapabilities,
 )
-from tessera.terminal.engine import TesseraTerminal
+from phren.terminal.engine import PhrenTerminal
 
 
 # ══════════════════════════════════════════════
@@ -435,7 +435,7 @@ def _suggest_next(path: list[PathEntry], screen: dict, task_goal: str) -> str:
 def run_agent(
     task: AgentTask,
     model: str,
-    terminal: TesseraTerminal,
+    terminal: PhrenTerminal,
     sim_url: str,
     verbose_hint: bool = False,
 ) -> AgentRun:
@@ -876,6 +876,180 @@ def _parse_agent_response(response: str) -> Optional[dict]:
 
 
 # ══════════════════════════════════════════════
+# TTL MODE AGENT LOOP
+# ══════════════════════════════════════════════
+
+TTL_SYSTEM_PROMPT = """You navigate a website terminal. Each turn shows your result and the next step.
+
+Reply with ONE JSON object. No other text.
+
+{"action": "action_id", "params": {"key": "value"}}
+{"action": "DONE"} when complete.
+
+Use the IDs shown in results. Follow NEXT. Add confirmed=true when CONFIRM is shown."""
+
+
+def run_agent_ttl(
+    task: AgentTask,
+    model: str,
+    terminal: PhrenTerminal,
+    sim_url: str,
+    contract: PhrenContract = None,
+    verbose_hint: bool = False,
+) -> AgentRun:
+    """Run an agent using TTL format — minimal tokens per turn."""
+    from phren.terminal.presenter import TerminalPresenter
+
+    start = time.monotonic()
+    steps = 0
+    invalid_actions = 0
+    actions_taken = []
+
+    presenter = TerminalPresenter(contract or terminal.contract)
+
+    # Connect
+    agent_profile = AgentProfile(
+        provider="eval",
+        agent_name=f"eval-{model}",
+        trust_level=AgentTrust.VERIFIED,
+        purpose=task.agent_purpose if hasattr(task, 'agent_purpose') and task.agent_purpose else "purchase",
+        capabilities=AgentCapabilities(can_transact=True),
+        delegated_by_user=True,
+    )
+    connect_result = terminal.connect(agent_profile)
+    if connect_result["status"] != "connected":
+        return AgentRun(
+            task_id=task.id, model=model, trial=0, passed=False,
+            steps=0, invalid_actions=0,
+            error=f"Connect failed: {connect_result.get('reason', '')}",
+        )
+
+    session_id = connect_result["session_id"]
+    done_actions = set()
+    last_result_data = None
+    last_action_id = ""
+    last_status = ""
+
+    # State tracking (mirrors what flat_engine does)
+    agent_state = {"logged_in": False, "cart_items": [], "last_search_results": [], "current_step": "start"}
+
+    for step_num in range(task.max_steps):
+        steps += 1
+
+        # Build prompt
+        if step_num == 0:
+            prompt = presenter.first_turn(goal=task.goal)
+        else:
+            prompt = presenter.turn(
+                last_action=last_action_id,
+                status=last_status,
+                result_data=last_result_data,
+                state=agent_state,
+                done_actions=done_actions,
+            )
+
+        # Ask LLM
+        response = ollama_generate(model, prompt, system=TTL_SYSTEM_PROMPT)
+        action_data = _parse_agent_response(response)
+
+        if action_data is None:
+            invalid_actions += 1
+            actions_taken.append({
+                "step": step_num, "raw": response[:500] if response else "(EMPTY RESPONSE)",
+                "parsed": None, "result": "parse_error",
+            })
+            last_status = "parse_error"
+            continue
+
+        if action_data.get("action") == "DONE":
+            actions_taken.append({"step": step_num, "action": "DONE", "result": "agent_declared_done"})
+            break
+
+        action_id = action_data.get("action", "")
+        params = action_data.get("params", {})
+        confirmed = params.pop("confirmed", False)
+        if isinstance(confirmed, str):
+            confirmed = confirmed.lower() in ("true", "1", "yes")
+
+        # Execute
+        try:
+            result = terminal.execute_action(session_id, action_id, params, confirmed=confirmed)
+            status = result.get("status", "unknown")
+        except Exception as e:
+            result = {"status": "error", "message": str(e)}
+            status = "error"
+
+        # Update state
+        if status == "ok":
+            last_result_data = result.get("data")
+            done_actions.add(action_id)
+            _update_agent_state(agent_state, action_id, params, result.get("data", {}))
+        elif status == "confirmation_required":
+            last_result_data = result
+        else:
+            last_result_data = result
+            invalid_actions += 1
+
+        last_action_id = action_id
+        last_status = status
+
+        actions_taken.append({
+            "step": step_num, "action": action_id, "params": params,
+            "confirmed": confirmed, "result": status,
+            "reason": result.get("reason", result.get("message", "")),
+        })
+
+    elapsed = time.monotonic() - start
+
+    # Ground truth
+    gt_passed = False
+    if task.ground_truth:
+        try:
+            gt_passed = task.ground_truth(sim_url)
+        except Exception:
+            gt_passed = False
+
+    try:
+        terminal.disconnect(session_id)
+    except Exception:
+        pass
+
+    return AgentRun(
+        task_id=task.id, model=model, trial=0,
+        passed=gt_passed, steps=steps, invalid_actions=invalid_actions,
+        actions_taken=actions_taken, ground_truth_passed=gt_passed,
+        elapsed_seconds=elapsed,
+    )
+
+
+def _update_agent_state(state: dict, action_id: str, params: dict, data: dict):
+    """Update tracked state after a successful action."""
+    if not isinstance(data, dict):
+        return
+    if "login" in action_id and (data.get("token") or data.get("access_token")):
+        state["logged_in"] = True
+    if "add" in action_id and "cart" in action_id:
+        pid = params.get("product_id", "")
+        state["cart_items"].append(pid)
+    if "remove" in action_id:
+        pid = params.get("product_id", "")
+        state["cart_items"] = [i for i in state["cart_items"] if i != pid]
+    for key in ("products", "rooms", "documents", "hotels"):
+        items = data.get(key, [])
+        if items and isinstance(items, list):
+            state["last_search_results"] = [
+                {"id": i.get("id"), "name": i.get("name", i.get("title", "")), "price": i.get("price", i.get("rate", ""))}
+                for i in items[:5] if isinstance(i, dict)
+            ]
+    for key in ("order_id", "reservation_id", "request_id"):
+        if data.get(key):
+            state["current_step"] = "completed"
+    for key in ("reservation", "request", "order"):
+        if isinstance(data.get(key), dict) and data[key].get("id"):
+            state["current_step"] = "completed"
+
+
+# ══════════════════════════════════════════════
 # EVAL RUNNER
 # ══════════════════════════════════════════════
 
@@ -885,6 +1059,7 @@ def run_eval(
     trials: int = 3,
     verbose: bool = False,
     flat_mode: bool = False,
+    ttl_mode: bool = False,
 ) -> AgentTaskResult:
     """Run an agent eval: start server, run N trials, collect metrics."""
 
@@ -909,13 +1084,13 @@ def run_eval(
             # Load contract and create fresh terminal per trial
             with open(task.contract_path) as f:
                 contract_data = json.load(f)
-            contract = TesseraContract(**contract_data)
+            contract = PhrenContract(**contract_data)
 
             if flat_mode:
-                from tessera.terminal.flat_engine import FlatTerminal
+                from phren.terminal.flat_engine import FlatTerminal
                 terminal = FlatTerminal(contract, sim_url)
             else:
-                terminal = TesseraTerminal(contract, sim_url)
+                terminal = PhrenTerminal(contract, sim_url)
 
             # Run setup if provided
             if task.setup:
@@ -924,6 +1099,8 @@ def run_eval(
             # Run agent
             if flat_mode:
                 run = run_agent_flat(task, model, terminal, sim_url, verbose_hint=verbose)
+            elif ttl_mode:
+                run = run_agent_ttl(task, model, terminal, sim_url, contract, verbose_hint=verbose)
             else:
                 run = run_agent(task, model, terminal, sim_url, verbose_hint=verbose)
             run.trial = trial + 1
@@ -959,7 +1136,7 @@ def run_eval(
 def print_results(results: list[AgentTaskResult]):
     """Print a summary table."""
     print(f"\n{'='*75}")
-    print(f"  TESSERA AGENT EVAL RESULTS")
+    print(f"  PHREN AGENT EVAL RESULTS")
     print(f"{'='*75}")
     print(f"  {'Task':<35} {'Model':<15} {'pass@1':>8} {'Steps':>7} {'Invalid':>8} {'Time':>7}")
     print(f"  {'-'*35} {'-'*15} {'-'*8} {'-'*7} {'-'*8} {'-'*7}")
@@ -1015,13 +1192,14 @@ def results_to_json(results: list[AgentTaskResult]) -> str:
 # ══════════════════════════════════════════════
 
 def main():
-    parser = argparse.ArgumentParser(description="Tessera Agent Eval")
+    parser = argparse.ArgumentParser(description="Phren Agent Eval")
     parser.add_argument("--task", help="Task ID to run (or 'all')")
     parser.add_argument("--model", default="qwen3:8b", help="Ollama model name")
     parser.add_argument("--trials", type=int, default=3, help="Number of trials per task")
     parser.add_argument("--list", action="store_true", help="List available tasks")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--flat", action="store_true", help="Use flat terminal (agent sees map + all tools at once)")
+    parser.add_argument("--ttl", action="store_true", help="Use TTL format (token-efficient, ~6x fewer tokens per turn)")
     parser.add_argument("--output", help="Save results JSON to file")
     args = parser.parse_args()
 
@@ -1054,7 +1232,7 @@ def main():
             sys.exit(1)
         tasks = [task]
 
-    print(f"\nTessera Agent Eval")
+    print(f"\nPhren Agent Eval")
     print(f"  Model: {args.model}")
     print(f"  Tasks: {len(tasks)}")
     print(f"  Trials: {args.trials}")
@@ -1063,7 +1241,8 @@ def main():
     results = []
     for task in tasks:
         print(f"[{task.id}] {task.description}")
-        result = run_eval(task, args.model, args.trials, verbose=args.verbose, flat_mode=args.flat)
+        result = run_eval(task, args.model, args.trials, verbose=args.verbose,
+                         flat_mode=args.flat, ttl_mode=args.ttl)
         results.append(result)
         icon = "✅" if result.pass_rate > 0 else "❌"
         print(f"  {icon} pass@1: {result.passed}/{result.trials} "

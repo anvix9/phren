@@ -1,4 +1,4 @@
-# Tessera — Eval Results
+# Phren — Eval Results
 
 ## Headline
 
@@ -29,7 +29,7 @@ There are three ways an agent can interact with a website:
 └──────────────────────────────────────────────┘
 ```
 
-| | Raw API | MCP Tools | Browser Agent | **Tessera Terminal** |
+| | Raw API | MCP Tools | Browser Agent | **Phren Terminal** |
 |---|---|---|---|---|
 | **Governance** | None | None | None | Trust tiers, spend limits, rate limits |
 | **Flow guidance** | None | None | None | Roles, hints, path trace |
@@ -38,7 +38,7 @@ There are three ways an agent can interact with a website:
 | **Site cooperation** | Must build API | Must publish tools | None needed | Publishes contract |
 | **Cost per task** | ¢ | ¢ | $$$ | **¢** |
 
-Browser agents need vision models (70B+) to screenshot and click through a checkout flow. Tessera terminals let a 0.8B model do the same thing — **~100x cheaper inference**.
+Browser agents need vision models (70B+) to screenshot and click through a checkout flow. Phren terminals let a 0.8B model do the same thing — **~100x cheaper inference**.
 
 ## Model Matrix
 

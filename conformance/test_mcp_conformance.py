@@ -1,7 +1,7 @@
 """
-Tessera MCP Conformance Suite
+Phren MCP Conformance Suite
 
-Verifies the Tessera MCP server conforms to the MCP protocol.
+Verifies the Phren MCP server conforms to the MCP protocol.
 Tests that the server is a real MCP server using the official SDK,
 not a REST API pretending to be one.
 
@@ -23,12 +23,12 @@ from mcp.server import Server
 from mcp import Tool
 from mcp.types import TextContent
 
-from tessera.mcp.server import (
-    create_tessera_mcp, TOOLS,
+from phren.mcp.server import (
+    create_phren_mcp, TOOLS,
     _make_call_tool_handler, _make_list_tools_handler,
 )
-from tessera.contract.schema import TesseraContract
-from tessera.terminal.engine import TesseraTerminal
+from phren.contract.schema import PhrenContract
+from phren.terminal.engine import PhrenTerminal
 
 
 def _async(coro):
@@ -54,7 +54,7 @@ def mcp_server(tmp_path):
     path = str(tmp_path / "contract.json")
     with open(path, "w") as f:
         json.dump(contract_data, f)
-    return create_tessera_mcp(path, "http://localhost:9999")
+    return create_phren_mcp(path, "http://localhost:9999")
 
 
 # ═══════════════════════════════════════════════
@@ -72,7 +72,7 @@ class TestServerIsMCP:
         assert caps.tools is not None
 
     def test_server_name(self, mcp_server):
-        # Server should identify as tessera
+        # Server should identify as phren
         # (checked via initialization options)
         opts = mcp_server.create_initialization_options()
         assert opts is not None
@@ -108,17 +108,17 @@ class TestToolsList:
                 assert isinstance(schema["required"], list)
 
     def test_tool_names_are_namespaced(self):
-        """All tool names should start with tessera_ prefix."""
+        """All tool names should start with phren_ prefix."""
         for tool in TOOLS:
-            assert tool.name.startswith("tessera_"), \
-                f"Tool '{tool.name}' should be prefixed with tessera_"
+            assert tool.name.startswith("phren_"), \
+                f"Tool '{tool.name}' should be prefixed with phren_"
 
     def test_exactly_five_tools(self):
         assert len(TOOLS) == 5
         names = {t.name for t in TOOLS}
         assert names == {
-            "tessera_connect", "tessera_get_screen", "tessera_execute",
-            "tessera_audit_log", "tessera_disconnect",
+            "phren_connect", "phren_get_screen", "phren_execute",
+            "phren_audit_log", "phren_disconnect",
         }
 
 
@@ -130,44 +130,44 @@ class TestToolsCall:
     """tools/call must return TextContent responses."""
 
     def test_returns_text_content(self, mcp_server):
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="call-test", site_name="Test",
             site_url="http://localhost:9999",
             require_identification=False,
             rate_limits={"max_concurrent_sessions": 10},
         )
-        terminal = TesseraTerminal(contract, "http://localhost:9999")
+        terminal = PhrenTerminal(contract, "http://localhost:9999")
         handler = _make_call_tool_handler(terminal, None)
 
-        result = _async(handler("tessera_connect", {}))
+        result = _async(handler("phren_connect", {}))
         assert isinstance(result, list)
         assert len(result) >= 1
         assert isinstance(result[0], TextContent)
         assert result[0].type == "text"
 
     def test_response_is_valid_json(self, mcp_server):
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="json-test", site_name="Test",
             site_url="http://localhost:9999",
             require_identification=False,
             rate_limits={"max_concurrent_sessions": 10},
         )
-        terminal = TesseraTerminal(contract, "http://localhost:9999")
+        terminal = PhrenTerminal(contract, "http://localhost:9999")
         handler = _make_call_tool_handler(terminal, None)
 
-        result = _async(handler("tessera_connect", {}))
+        result = _async(handler("phren_connect", {}))
         # Must be parseable JSON
         data = json.loads(result[0].text)
         assert isinstance(data, dict)
 
     def test_unknown_tool_returns_error_not_exception(self, mcp_server):
         """Unknown tools return error in response, not throw."""
-        contract = TesseraContract(
+        contract = PhrenContract(
             contract_id="err-test", site_name="Test",
             site_url="http://localhost:9999",
             require_identification=False,
         )
-        terminal = TesseraTerminal(contract, "http://localhost:9999")
+        terminal = PhrenTerminal(contract, "http://localhost:9999")
         handler = _make_call_tool_handler(terminal, None)
 
         result = _async(handler("nonexistent_tool", {}))
@@ -195,7 +195,7 @@ class TestTransports:
 
     def test_stdio_runner_exists(self):
         """The stdio runner function exists and is importable."""
-        from tessera.mcp.server import run_stdio
+        from phren.mcp.server import run_stdio
         assert callable(run_stdio)
 
 
@@ -207,13 +207,13 @@ class TestProtocolDetails:
     """Verify MCP protocol-level details."""
 
     def test_connect_tool_credential_is_optional(self):
-        """tessera_connect must not require credential (anonymous allowed)."""
-        connect = next(t for t in TOOLS if t.name == "tessera_connect")
+        """phren_connect must not require credential (anonymous allowed)."""
+        connect = next(t for t in TOOLS if t.name == "phren_connect")
         required = connect.input_schema.get("required", [])
         assert "credential" not in required
 
     def test_execute_tool_requires_session_and_action(self):
-        execute = next(t for t in TOOLS if t.name == "tessera_execute")
+        execute = next(t for t in TOOLS if t.name == "phren_execute")
         required = execute.input_schema.get("required", [])
         assert "session_id" in required
         assert "action_id" in required
