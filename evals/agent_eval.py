@@ -258,13 +258,20 @@ def start_simulation(sim_dir: str, port: int) -> subprocess.Popen:
          "--host", "127.0.0.1", "--port", str(port),
          "--log-level", "warning"],
         cwd=sim_dir,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         preexec_fn=os.setsid,
     )
 
     # Wait for server to be ready
     for _ in range(30):
+        # Check if process died
+        if proc.poll() is not None:
+            stderr = proc.stderr.read().decode() if proc.stderr else ""
+            raise RuntimeError(
+                f"Simulation at {sim_dir} exited immediately.\n"
+                f"stderr: {stderr[:500]}"
+            )
         try:
             r = http_requests.get(f"http://localhost:{port}/", timeout=1)
             if r.status_code < 500:
@@ -273,7 +280,12 @@ def start_simulation(sim_dir: str, port: int) -> subprocess.Popen:
             pass
         time.sleep(0.5)
 
-    raise RuntimeError(f"Simulation at {sim_dir} failed to start on port {port}")
+    # Timed out — capture any error output
+    stderr = proc.stderr.read().decode() if proc.stderr else ""
+    raise RuntimeError(
+        f"Simulation at {sim_dir} failed to start on port {port}\n"
+        f"stderr: {stderr[:500]}"
+    )
 
 
 def stop_simulation(proc: subprocess.Popen):
