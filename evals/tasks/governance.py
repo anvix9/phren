@@ -45,6 +45,15 @@ GOVERNANCE_SCREEN = ScreenDefinition(
 ).model_dump()
 
 
+# Default rate limits for governance tests — always includes spend ceiling
+# so contracts are never fail-open (the schema validator now raises on this)
+DEFAULT_GOV_RATE_LIMITS = {
+    "max_concurrent_sessions": 10,
+    "max_transaction_amount": 1000.0,
+    "max_daily_spend": 5000.0,
+}
+
+
 def governance_tasks() -> list[TaskDefinition]:
     """Return all governance boundary tasks."""
     tasks = []
@@ -61,6 +70,7 @@ def governance_tasks() -> list[TaskDefinition]:
         agent_config={"trust_level": "anonymous"},
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
+            "rate_limits": DEFAULT_GOV_RATE_LIMITS,
             "entry_screen": "main",
             "default_trust_for_actions": "anonymous",
         },
@@ -78,6 +88,7 @@ def governance_tasks() -> list[TaskDefinition]:
         agent_config={"trust_level": "anonymous"},
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
+            "rate_limits": DEFAULT_GOV_RATE_LIMITS,
             "entry_screen": "main",
             "action_trust_requirements": [
                 {"action_id": "buy", "min_trust_level": "verified"},
@@ -96,6 +107,7 @@ def governance_tasks() -> list[TaskDefinition]:
         agent_config={"trust_level": "identified"},
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
+            "rate_limits": DEFAULT_GOV_RATE_LIMITS,
             "entry_screen": "main",
             "action_trust_requirements": [
                 {"action_id": "buy", "min_trust_level": "verified"},
@@ -117,6 +129,7 @@ def governance_tasks() -> list[TaskDefinition]:
         },
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
+            "rate_limits": DEFAULT_GOV_RATE_LIMITS,
             "entry_screen": "main",
             "action_trust_requirements": [
                 {"action_id": "buy", "min_trust_level": "verified"},
@@ -208,7 +221,7 @@ def governance_tasks() -> list[TaskDefinition]:
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
             "entry_screen": "main",
-            "rate_limits": {"max_concurrent_sessions": 10, "max_daily_spend": 500.0},
+            "rate_limits": {"max_concurrent_sessions": 10, "max_daily_spend": 500.0, "max_transaction_amount": 1000.0},
         },
         steps=[
             TaskStep(
@@ -231,7 +244,7 @@ def governance_tasks() -> list[TaskDefinition]:
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
             "entry_screen": "main",
-            "rate_limits": {"requests_per_minute": 4, "max_concurrent_sessions": 10},
+            "rate_limits": {"requests_per_minute": 4, "max_concurrent_sessions": 10, "max_transaction_amount": 1000.0},
         },
         steps=[
             # 1 connect (implicit) + 3 browse = 4 total → limit hit
@@ -255,6 +268,7 @@ def governance_tasks() -> list[TaskDefinition]:
         agent_config={"trust_level": "verified"},
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
+            "rate_limits": DEFAULT_GOV_RATE_LIMITS,
             "entry_screen": "main",
             "expires_at": "2020-01-01T00:00:00+00:00",
         },
@@ -276,7 +290,7 @@ def governance_tasks() -> list[TaskDefinition]:
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
             "entry_screen": "main",
-            "rate_limits": {"max_concurrent_sessions": 1},
+            "rate_limits": {"max_concurrent_sessions": 1, "max_transaction_amount": 1000.0},
         },
         # Note: this task connects once (the harness connect), then we can't
         # test a second connect through steps. Tested in integration tests instead.
@@ -298,7 +312,7 @@ def governance_tasks() -> list[TaskDefinition]:
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
             "entry_screen": "main",
-            "rate_limits": {"max_items_per_action": 5, "max_concurrent_sessions": 10},
+            "rate_limits": {"max_items_per_action": 5, "max_concurrent_sessions": 10, "max_transaction_amount": 1000.0},
         },
         steps=[
             TaskStep(
@@ -317,7 +331,7 @@ def governance_tasks() -> list[TaskDefinition]:
         contract_overrides={
             "screens": [GOVERNANCE_SCREEN],
             "entry_screen": "main",
-            "rate_limits": {"max_items_per_action": 10, "max_concurrent_sessions": 10},
+            "rate_limits": {"max_items_per_action": 10, "max_concurrent_sessions": 10, "max_transaction_amount": 1000.0},
         },
         steps=[
             TaskStep(action="buy", params={"quantity": 3}, expect="error"),
@@ -343,7 +357,7 @@ def governance_tasks() -> list[TaskDefinition]:
             "screens": [GOVERNANCE_SCREEN],
             "entry_screen": "main",
             "required_confirmations": ["buy"],
-            "rate_limits": {"max_concurrent_sessions": 10},
+            "rate_limits": {"max_concurrent_sessions": 10, "max_transaction_amount": 1000.0},
         },
         steps=[
             TaskStep(
@@ -367,7 +381,7 @@ def governance_tasks() -> list[TaskDefinition]:
             "screens": [GOVERNANCE_SCREEN],
             "entry_screen": "main",
             "required_confirmations": ["buy"],
-            "rate_limits": {"max_concurrent_sessions": 10},
+            "rate_limits": {"max_concurrent_sessions": 10, "max_transaction_amount": 1000.0},
         },
         steps=[
             TaskStep(action="buy", params={"total": 10.0, "confirmed": True}, expect="error"),

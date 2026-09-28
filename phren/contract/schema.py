@@ -259,16 +259,21 @@ class PhrenContract(BaseModel):
                 allows_transactions = True
                 break
 
-        if allows_transactions:
-            if self.rate_limits.max_transaction_amount is None:
-                import warnings
-                warnings.warn(
-                    f"Contract '{self.contract_id}' allows verified/super_agent trust "
-                    f"but has no max_transaction_amount. Set rate_limits.max_transaction_amount "
-                    f"to establish a per-transaction ceiling.",
-                    UserWarning,
-                    stacklevel=2,
-                )
+        # Also check: if any screen has POST/PUT/PATCH/DELETE actions,
+        # the contract is transactable regardless of trust requirements
+        for screen in self.screens:
+            for action in screen.actions:
+                if action.api_method in ("POST", "PUT", "PATCH", "DELETE"):
+                    allows_transactions = True
+                    break
+
+        if allows_transactions and self.rate_limits.max_transaction_amount is None:
+            raise ValueError(
+                f"Contract '{self.contract_id}' has transactable actions but no "
+                f"max_transaction_amount. Set rate_limits.max_transaction_amount "
+                f"to establish a per-transaction ceiling. A contract that permits "
+                f"transactions without a spend ceiling is fail-open."
+            )
 
         return self
 

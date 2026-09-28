@@ -54,7 +54,7 @@ phren = "phren.cli.main:cli"
 include = ["phren*"]
 
 [tool.pytest.ini_options]
-testpaths = ["evals", "conformance", "tests"]
+testpaths = ["evals", "conformance"]
 python_files = ["test_*.py"]
 
 [tool.setuptools.package-data]

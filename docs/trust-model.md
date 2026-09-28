@@ -150,7 +150,7 @@ This trust model is deliberately simple and self-contained. The build plan (Phas
 - **OAuth 2.1 / DCR / OIDC Federation**: Standard auth flows
 - **Visa Trusted Agent Protocol**: Payment-specific trust
 
-These are adapter paths in `/interop/`, not replacements. Phren owns the policy layer *above* whatever identity standard wins.
+These will be adapter paths in `/interop/` (not yet implemented). Phren owns the policy layer *above* whatever identity standard wins.
 
 ## MCP Server (Phase 3)
 

@@ -2,9 +2,9 @@
 
 ## Headline
 
-**Six models from 0.8B to 8B parameters. Seven tasks across three domains. 126 trials. 100% pass rate.**
+**Terminal design, not model size, determines agent success.** Six models from 0.8B to 8B parameters complete all tasks at 100% — but the same models score 0% without the terminal's path trace and flow guidance. The improvement comes entirely from the terminal, not the model.
 
-A governed terminal with path trace and flow hints enables any model — down to 800 million parameters — to complete purchases, bookings, and document requests on governed web simulations.
+All 7 tasks follow the same shape (login → search → act), tested with 3 trials per model across three domains. 126/126 on linear flows. Branching, error recovery, and adversarial paths remain untested.
 
 ## Why a terminal, not a browser?
 
@@ -101,5 +101,5 @@ These results cover linear happy paths on 3 hand-written simulations. Not yet te
 pip install -e ".[dev]"
 ollama pull llama3.2:3b
 python3 -m evals.agent_eval --task all --model llama3.2:3b --trials 3 -v
-pytest evals/ conformance/ -v   # 180 automated tests
+pytest evals/ conformance/ -v   # 183 automated tests
 ```

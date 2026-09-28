@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/phren_logo.png" alt="Phren — Agent Terminal for the Web" width="600">
+</p>
+
 # Phren — Governed Terminals for AI Agents
 
 Phren compiles any website into a **terminal** — a governed, navigable layer between AI agents and web APIs. Agents navigate terminals via MCP to complete tasks like purchasing, booking, or requesting documents.
@@ -38,7 +42,11 @@ The terminal is the RULES + MAP + MEMORY in between.
 
 ## Agent eval results
 
-**6 models × 7 tasks × 3 trials = 126/126 (100%)**
+**Terminal design, not model size, determines agent success.** The same models that score 0% without terminal guidance score 100% with it — the improvement comes entirely from the terminal, not the model.
+
+![Design Iteration Impact](docs/plots/design_iteration.png)
+
+Six models from 0.8B to 8B, 126/126 on linear flows across three domains (e-commerce, hospitality, government). All tasks follow the same shape (login → search → act), tested with 3 trials per model. Branching, error recovery, and adversarial paths remain untested.
 
 | Model | Params | Family | pass@1 | Avg Steps | Avg Invalid | Avg Time |
 |-------|--------|--------|--------|-----------|-------------|----------|
@@ -99,10 +107,28 @@ pip install -e ".[dev]"
 # Required for running simulations and eval tasks
 pip install PyJWT uvicorn fastapi pydantic
 
-pytest evals/ conformance/ -v        # 180 tests
+pytest evals/ conformance/ -v        # 183 tests
 ```
 
 > **Note:** Install `PyJWT` (not `jwt`). Both install as `import jwt` but only PyJWT has `encode`/`decode`.
+
+## CLI
+
+```bash
+phren info <contract.json>          # Show contract summary: screens, actions, flow hints, limits
+phren verify <contract.json>        # Validate a contract (fail-open → error)
+phren compile <path> -o out.json    # Compile website source into a contract
+phren serve <contract.json>         # Start MCP terminal server (HTTP or stdio)
+phren eval <contract.json>          # Run agent eval against a simulation
+phren demo                          # One-command demo: start simulation, connect, browse
+```
+
+```bash
+# Quick start
+phren demo
+phren info simulations/shopping/contract.json
+phren compile simulations/shopping/api -o /tmp/test.json --site-name "My Shop"
+```
 
 ## Run agent evals
 

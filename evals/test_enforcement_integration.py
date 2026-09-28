@@ -45,6 +45,7 @@ def _make_terminal(contract_overrides: dict) -> PhrenTerminal:
             ),
         ],
         "entry_screen": "main",
+        "rate_limits": {"max_transaction_amount": 1000.0, "max_concurrent_sessions": 10},
     }
     defaults.update(contract_overrides)
     contract = PhrenContract(**defaults)
@@ -97,7 +98,7 @@ class TestMaxSessionsIntegration:
 
     def test_second_session_denied_when_max_is_1(self):
         terminal = _make_terminal({
-            "rate_limits": RateLimit(max_concurrent_sessions=1).model_dump(),
+            "rate_limits": RateLimit(max_concurrent_sessions=1, max_transaction_amount=1000.0).model_dump(),
         })
         sid1 = _connect(terminal)
         # Second connect should be denied
@@ -108,7 +109,7 @@ class TestMaxSessionsIntegration:
 
     def test_session_freed_after_disconnect(self):
         terminal = _make_terminal({
-            "rate_limits": RateLimit(max_concurrent_sessions=1).model_dump(),
+            "rate_limits": RateLimit(max_concurrent_sessions=1, max_transaction_amount=1000.0).model_dump(),
         })
         sid1 = _connect(terminal)
         terminal.disconnect(sid1)
@@ -128,6 +129,7 @@ class TestRateLimitIntegration:
             "rate_limits": RateLimit(
                 requests_per_minute=5,  # 5 total: 1 connect + 4 actions allowed
                 max_concurrent_sessions=10,
+                max_transaction_amount=1000.0,
             ).model_dump(),
         })
         sid = _connect(terminal)  # counts as 1 entry in audit log
@@ -156,6 +158,7 @@ class TestMaxItemsIntegration:
             "rate_limits": RateLimit(
                 max_items_per_action=5,
                 max_concurrent_sessions=10,
+                max_transaction_amount=1000.0,
             ).model_dump(),
         })
         sid = _connect(terminal)
@@ -168,6 +171,7 @@ class TestMaxItemsIntegration:
             "rate_limits": RateLimit(
                 max_items_per_action=10,
                 max_concurrent_sessions=10,
+                max_transaction_amount=1000.0,
             ).model_dump(),
         })
         sid = _connect(terminal)
@@ -185,7 +189,7 @@ class TestTransactionAmountIntegration:
 
     def test_amount_over_limit_denied(self):
         terminal = _make_terminal({
-            "rate_limits": RateLimit(max_concurrent_sessions=10).model_dump(),
+            "rate_limits": RateLimit(max_concurrent_sessions=10, max_transaction_amount=1000.0).model_dump(),
         })
         # Connect with a max_transaction_amount in capabilities
         sid = _connect(terminal, capabilities=AgentCapabilities(
@@ -198,7 +202,7 @@ class TestTransactionAmountIntegration:
 
     def test_amount_under_limit_not_blocked_for_amount(self):
         terminal = _make_terminal({
-            "rate_limits": RateLimit(max_concurrent_sessions=10).model_dump(),
+            "rate_limits": RateLimit(max_concurrent_sessions=10, max_transaction_amount=1000.0).model_dump(),
         })
         sid = _connect(terminal, capabilities=AgentCapabilities(
             can_transact=True,
@@ -218,7 +222,7 @@ class TestUserConsentIntegration:
     def test_action_requiring_consent_without_token_denied(self):
         terminal = _make_terminal({
             "required_confirmations": ["buy"],
-            "rate_limits": RateLimit(max_concurrent_sessions=10).model_dump(),
+            "rate_limits": RateLimit(max_concurrent_sessions=10, max_transaction_amount=1000.0).model_dump(),
         })
         # Connect WITHOUT delegation or consent token
         sid = _connect(terminal, delegated_by_user=False)
@@ -229,7 +233,7 @@ class TestUserConsentIntegration:
     def test_action_requiring_consent_with_delegation_passes(self):
         terminal = _make_terminal({
             "required_confirmations": ["buy"],
-            "rate_limits": RateLimit(max_concurrent_sessions=10).model_dump(),
+            "rate_limits": RateLimit(max_concurrent_sessions=10, max_transaction_amount=1000.0).model_dump(),
         })
         sid = _connect(terminal, delegated_by_user=True)
         result = terminal.execute_action(sid, "buy", {"quantity": 1}, confirmed=True)
@@ -316,6 +320,7 @@ class TestContractCeilingIntegration:
             "rate_limits": RateLimit(
                 max_concurrent_sessions=10,
                 max_daily_spend=500.0,  # CONTRACT says 500
+                max_transaction_amount=1000.0,
             ).model_dump(),
         })
         sid = _connect(terminal, capabilities=AgentCapabilities(
@@ -328,3 +333,78 @@ class TestContractCeilingIntegration:
             f"but 600 was not denied. Got: {result}"
         )
         assert "500" in result["reason"]
+
+
+# ═══════════════════════════════════════════════
+# FAIL-OPEN REJECTION (audit finding — the critical fix)
+# ═══════════════════════════════════════════════
+
+class TestFailOpenRejection:
+    """
+    Regression test: a contract with transactable actions but no
+    max_transaction_amount MUST be rejected at construction time.
+    Previously it was accepted with a warning.
+    """
+
+    def test_fail_open_contract_raises(self):
+        """Contract with POST actions but no max_transaction_amount → ValueError."""
+        with pytest.raises(Exception) as exc_info:
+            PhrenContract(
+                contract_id="fail-open-demo",
+                site_name="Fail Open",
+                site_url="http://localhost",
+                require_identification=False,
+                screens=[
+                    ScreenDefinition(
+                        id="main", name="Main", description="test",
+                        actions=[
+                            ActionDefinition(
+                                id="buy", name="Buy", description="buy",
+                                api_method="POST", api_endpoint="/api/buy",
+                            ),
+                        ],
+                    ),
+                ],
+            )
+        assert "max_transaction_amount" in str(exc_info.value)
+
+    def test_contract_with_spend_limit_accepted(self):
+        """Contract with POST actions AND max_transaction_amount → accepted."""
+        contract = PhrenContract(
+            contract_id="valid-demo",
+            site_name="Valid",
+            site_url="http://localhost",
+            rate_limits=RateLimit(max_transaction_amount=100.0),
+            screens=[
+                ScreenDefinition(
+                    id="main", name="Main", description="test",
+                    actions=[
+                        ActionDefinition(
+                            id="buy", name="Buy", description="buy",
+                            api_method="POST", api_endpoint="/api/buy",
+                        ),
+                    ],
+                ),
+            ],
+        )
+        assert contract.rate_limits.max_transaction_amount == 100.0
+
+    def test_readonly_contract_accepted_without_spend_limit(self):
+        """Contract with only GET actions → no spend limit needed."""
+        contract = PhrenContract(
+            contract_id="readonly-demo",
+            site_name="Read Only",
+            site_url="http://localhost",
+            screens=[
+                ScreenDefinition(
+                    id="main", name="Main", description="test",
+                    actions=[
+                        ActionDefinition(
+                            id="browse", name="Browse", description="browse",
+                            api_method="GET", api_endpoint="/api/items",
+                        ),
+                    ],
+                ),
+            ],
+        )
+        assert contract.rate_limits.max_transaction_amount is None  # not needed
