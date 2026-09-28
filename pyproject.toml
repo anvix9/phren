@@ -44,8 +44,8 @@ dev = [
 all = ["phren[server,dev]"]
 
 [project.urls]
-Repository = "https://github.com/phren-agent/phren"
-Documentation = "https://github.com/phren-agent/phren#readme"
+Repository = "https://github.com/anvix9/phren"
+Documentation = "https://github.com/anvix9/phren#readme"
 
 [project.scripts]
 phren = "phren.cli.main:cli"

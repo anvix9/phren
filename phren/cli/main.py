@@ -401,6 +401,10 @@ def cmd_demo(args):
         )
 
         result = terminal.connect(agent)
+        if result["status"] != "connected":
+            print(f"  ❌ Connection failed: {result.get('reason', 'unknown')}")
+            sys.exit(1)
+
         sid = result["session_id"]
 
         print(f"  ✅ Connected (session: {sid[:16]}...)")
@@ -421,18 +425,25 @@ def cmd_demo(args):
         # Browse without login
         print(f"  → Executing: browse_without_login")
         r = terminal.execute_action(sid, "browse_without_login", {})
+        if r.get("status") != "ok":
+            print(f"    ❌ Failed: {r.get('reason', r.get('message', r['status']))}")
+            sys.exit(1)
         print(f"    Status: {r['status']}, screen: {r.get('screen_name', r.get('screen', '?'))}")
 
         # Search
         print(f"  → Executing: search(q='laptop')")
         r = terminal.execute_action(sid, "search", {"q": "laptop"})
+        if r.get("status") != "ok":
+            print(f"    ❌ Failed: {r.get('reason', r.get('message', r['status']))}")
+            sys.exit(1)
         if r.get("data") and r["data"].get("products"):
             products = r["data"]["products"]
             print(f"    Found {len(products)} products:")
             for p in products[:3]:
                 print(f"      {p['id']}  {p['name']}  ${p.get('price', '?')}")
         else:
-            print(f"    Status: {r['status']}")
+            print(f"    ❌ Search returned no products")
+            sys.exit(1)
 
         print()
         terminal.disconnect(sid)

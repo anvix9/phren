@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # The website simulation (what agents interact with)
   simulation:

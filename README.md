@@ -102,15 +102,9 @@ MCP server (JSON-RPC, stdio + HTTP)
 ## Install
 
 ```bash
-pip install -e ".[dev]"
-
-# Required for running simulations and eval tasks
-pip install PyJWT uvicorn fastapi pydantic
-
+pip install -e ".[all]"
 pytest evals/ conformance/ -v        # 183 tests
 ```
-
-> **Note:** Install `PyJWT` (not `jwt`). Both install as `import jwt` but only PyJWT has `encode`/`decode`.
 
 ## CLI
 

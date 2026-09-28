@@ -8,8 +8,7 @@ Get a governed agent terminal running in 5 minutes.
 # Clone and install
 git clone https://github.com/anvix9/phren.git
 cd phren
-pip install -e ".[dev]"
-pip install PyJWT uvicorn fastapi pydantic
+pip install -e ".[all]"
 
 # Run the demo (starts simulation, connects agent, browses products)
 phren demo

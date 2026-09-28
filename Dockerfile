@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir \
     pydantic>=2.0 \
     cryptography>=41.0 \
     requests>=2.28 \
-    mcp>=1.0.0
+    mcp>=2.2.0
 
 # Copy project
 COPY phren/ phren/
