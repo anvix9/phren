@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  # The website simulation (what agents interact with)
+  simulation:
+    build: .
+    command: >
+      sh -c "cd /app/simulations/shopping/api &&
+             python -m uvicorn main:app --host 0.0.0.0 --port 8080"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Phren MCP terminal server (governs agent access to the simulation)
+  phren:
+    build: .
+    command: >
+      phren serve simulations/shopping/contract.json
+      --site-url http://simulation:8080
+      --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      simulation:
+        condition: service_healthy
+
+  # One-shot eval runner (optional — run with: docker compose run eval)
+  eval:
+    build: .
+    command: >
+      sh -c "cd /app && python -m evals.agent_eval
+             --task shopping-full-purchase
+             --model llama3.2:3b
+             --trials 1 -v"
+    depends_on:
+      simulation:
+        condition: service_healthy
+    network_mode: host
+    profiles:
+      - eval

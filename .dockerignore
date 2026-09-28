@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+*.egg-info
+.pytest_cache
+.git
+.gitignore
+*.zip
+*.json.bak
+env/
+venv/
+.venv/

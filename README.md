@@ -137,6 +137,18 @@ ollama pull llama3.2:3b
 python3 -m evals.agent_eval --task all --model llama3.2:3b --trials 3 -v
 ```
 
+## Docker
+
+```bash
+# Start simulation + Phren terminal server
+docker compose up
+
+# Simulation on :8080, Phren MCP on :8000
+curl http://localhost:8000/mcp
+```
+
+See [docs/quickstart.md](docs/quickstart.md) for the full getting-started guide.
+
 ## Trust model
 
 Trust is derived from Ed25519-signed credentials, never self-declared. The terminal verifies the signature, checks expiration, validates the audience, rejects replayed tokens, and caps the trust tier at the operator's registered maximum.
@@ -151,7 +163,13 @@ FastAPI, Rails, Go (Chi/Echo), NestJS, Next.js (files/App Router/pages), tRPC, P
 
 ## Known limitations
 
-These results cover linear happy paths on 3 hand-written simulations. Not yet tested: complex branching paths, error recovery, real websites, or compiler-generated contracts.
+Results cover linear flows (login → search → act) on 3 simulations mimicking real website characteristics. Not yet tested on more dense and complex websites. Tested simulations:
+
+| Simulation | Domain | Characteristics |
+|---|---|---|
+| Shopping | E-commerce | Auth, search, cart state, checkout flow, order confirmation |
+| Booking | Hospitality | Date-range queries, room availability, reservation lifecycle |
+| Library | Government | Document catalog, department taxonomy, service request submission |
 
 ## License
 
