@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "phren"
 version = "0.2.0"
-description = "Governed Terminals for AI Agents — compiles websites into navigable, policy-enforced MCP terminals"
+description = "Governed Terminals for AI Agents - compiles websites into navigable, policy-enforced MCP terminals"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
 authors = [
-    { name = "Anvix", email = "contact@anvix.dev" },
+    { name = "anvix9", email = "epononanvi@gmail.com" },
 ]
 keywords = [
     "mcp",
