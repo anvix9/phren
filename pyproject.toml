@@ -5,22 +5,34 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "phren"
 version = "0.2.0"
-description = "Agent Terminal for the Web — compiles websites into governed MCP terminals"
+description = "Governed Terminals for AI Agents — compiles websites into navigable, policy-enforced MCP terminals"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
 authors = [
-    { name = "Phren Contributors" },
+    { name = "Anvix", email = "contact@anvix.dev" },
 ]
-keywords = ["mcp", "ai-agents", "web", "terminal", "governance"]
+keywords = [
+    "mcp",
+    "ai-agents",
+    "terminal",
+    "governance",
+    "web-automation",
+    "agent-safety",
+    "model-context-protocol",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Internet :: WWW/HTTP",
-    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
 
 dependencies = [
@@ -44,18 +56,30 @@ dev = [
 all = ["phren[server,dev]"]
 
 [project.urls]
+Homepage = "https://github.com/anvix9/phren"
 Repository = "https://github.com/anvix9/phren"
 Documentation = "https://github.com/anvix9/phren#readme"
+Issues = "https://github.com/anvix9/phren/issues"
+Changelog = "https://github.com/anvix9/phren/blob/main/CHANGELOG.md"
 
 [project.scripts]
 phren = "phren.cli.main:cli"
 
 [tool.setuptools.packages.find]
 include = ["phren*"]
-
-[tool.pytest.ini_options]
-testpaths = ["evals", "conformance"]
-python_files = ["test_*.py"]
+exclude = ["evals*", "simulations*", "tests*", "conformance*"]
 
 [tool.setuptools.package-data]
 phren = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["evals"]
+python_files = ["test_*.py"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
